@@ -3,22 +3,57 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DentalSys - Control Clínico Profesional</title>
+    <title>ODONTOSELL - Control Clínico Profesional</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome para Iconos -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Supabase JS Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
+    <!-- ESTILOS DINÁMICOS PARA CAMBIO DE SKINS (PIELES) -->
+    <style>
+        :root {
+            --primary-color: #115e59; /* teal-800 */
+            --primary-hover: #134e4a; /* teal-900 */
+            --accent-color: #5eead4;  /* teal-300 */
+            --bg-app: #f3f4f6;        /* gray-100 */
+        }
+        [data-theme="navy"] {
+            --primary-color: #1e40af; /* blue-800 */
+            --primary-hover: #1e3a8a; /* blue-900 */
+            --accent-color: #93c5fd;  /* blue-300 */
+            --bg-app: #f3f4f6;
+        }
+        [data-theme="dark"] {
+            --primary-color: #1f2937; /* gray-800 */
+            --primary-hover: #111827; /* gray-900 */
+            --accent-color: #9ca3af;  /* gray-400 */
+            --bg-app: #111827;        /* gray-900 */
+        }
+        [data-theme="purple"] {
+            --primary-color: #4338ca; /* indigo-800 */
+            --primary-hover: #312e81; /* indigo-900 */
+            --accent-color: #c7d2fe;  /* indigo-300 */
+            --bg-app: #f3f4f6;
+        }
+        
+        /* Clases de aplicación de tema */
+        .theme-bg { background-color: var(--primary-color) !important; }
+        .theme-hover:hover { background-color: var(--primary-hover) !important; }
+        .theme-text { color: var(--accent-color) !important; }
+        .theme-border { border-color: var(--primary-color) !important; }
+        body { background-color: var(--bg-app) !important; }
+    </style>
 </head>
-<body class="bg-gray-100 font-sans flex flex-col min-h-screen text-gray-800">
+<body class="font-sans flex flex-col min-h-screen text-gray-800">
 
     <!-- PANTALLA DE ACCESO / LOGIN (OBLIGATORIA) -->
-    <div id="login-overlay" class="fixed inset-0 bg-teal-900 bg-opacity-95 flex items-center justify-center z-50 p-4">
+    <div id="login-overlay" class="fixed inset-0 bg-teal-950 bg-opacity-95 flex items-center justify-center z-50 p-4">
         <div class="bg-white p-8 rounded-lg shadow-2xl w-full max-w-md space-y-6">
             <div class="text-center space-y-2">
                 <i class="fa-solid fa-tooth text-5xl text-teal-600"></i>
-                <h2 class="text-2xl font-bold text-gray-900">DentalSys</h2>
+                <h2 class="text-2xl font-bold text-gray-900">ODONTOSELL</h2>
                 <p class="text-sm text-gray-500 font-medium">Control de Acceso</p>
             </div>
 
@@ -71,28 +106,43 @@
     </div>
 
     <!-- HEADER / NAVEGACIÓN -->
-    <header class="bg-teal-800 text-white shadow-md hidden" id="app-header">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col lg:flex-row justify-between items-center space-y-4 lg:space-y-0">
-            <div class="flex items-center space-x-3">
-                <i class="fa-solid fa-tooth text-2xl text-teal-300"></i>
-                <span class="text-xl font-bold tracking-wider">DentalSys</span>
+    <header class="theme-bg text-white shadow-md hidden" id="app-header">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+            <div class="flex justify-between items-center w-full md:w-auto">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-tooth text-2xl theme-text"></i>
+                    <span class="text-xl font-bold tracking-wider font-semibold">ODONTOSELL</span>
+                </div>
+                
+                <!-- BOTÓN HAMBURGUESA PARA RESPONSIVO -->
+                <button onclick="toggleMobileMenu()" class="md:hidden text-white focus:outline-none text-xl p-1">
+                    <i class="fa-solid fa-bars" id="hamburger-icon"></i>
+                </button>
             </div>
             
-            <nav class="flex flex-wrap justify-center gap-1">
-                <button onclick="switchView('dashboard')" class="nav-btn px-3 py-2 rounded-md hover:bg-teal-900 transition text-sm font-medium" id="btn-dashboard">Inicio</button>
-                <button onclick="switchView('pacientes')" class="nav-btn px-3 py-2 rounded-md hover:bg-teal-900 transition text-sm font-medium" id="btn-pacientes">Pacientes</button>
-                <button onclick="switchView('doctores')" class="nav-btn px-3 py-2 rounded-md hover:bg-teal-900 transition text-sm font-medium hidden" id="btn-doctores">Doctores</button>
-                <button onclick="switchView('usuarios')" class="nav-btn px-3 py-2 rounded-md hover:bg-teal-900 transition text-sm font-medium hidden" id="btn-usuarios">Personal</button>
-                <button onclick="switchView('consultas')" class="nav-btn px-3 py-2 rounded-md hover:bg-teal-900 transition text-sm font-medium" id="btn-consultas">Consultas/Citas</button>
-                <button onclick="switchView('consultorios')" class="nav-btn px-3 py-2 rounded-md hover:bg-teal-900 transition text-sm font-medium hidden" id="btn-consultorios">Consultorios</button>
-                <button onclick="switchView('precios')" class="nav-btn px-3 py-2 rounded-md hover:bg-teal-900 transition text-sm font-medium hidden" id="btn-precios">Precios/Servicios</button>
-                <button onclick="switchView('contabilidad')" class="nav-btn px-3 py-2 rounded-md hover:bg-teal-900 transition text-sm font-medium hidden" id="btn-contabilidad">Contabilidad</button>
+            <!-- MENÚ PRINCIPAL (ADAPTATIVO) -->
+            <nav class="hidden md:flex flex-col md:flex-row w-full md:w-auto gap-1 text-center" id="app-nav">
+                <button onclick="switchView('dashboard')" class="nav-btn px-3 py-2 rounded-md theme-hover transition text-sm font-medium" id="btn-dashboard">Inicio</button>
+                <button onclick="switchView('pacientes')" class="nav-btn px-3 py-2 rounded-md theme-hover transition text-sm font-medium" id="btn-pacientes">Pacientes</button>
+                <button onclick="switchView('doctores')" class="nav-btn px-3 py-2 rounded-md theme-hover transition text-sm font-medium hidden" id="btn-doctores">Doctores</button>
+                <button onclick="switchView('usuarios')" class="nav-btn px-3 py-2 rounded-md theme-hover transition text-sm font-medium hidden" id="btn-usuarios">Personal</button>
+                <button onclick="switchView('consultas')" class="nav-btn px-3 py-2 rounded-md theme-hover transition text-sm font-medium" id="btn-consultas">Consultas/Citas</button>
+                <button onclick="switchView('consultorios')" class="nav-btn px-3 py-2 rounded-md theme-hover transition text-sm font-medium hidden" id="btn-consultorios">Consultorios</button>
+                <button onclick="switchView('precios')" class="nav-btn px-3 py-2 rounded-md theme-hover transition text-sm font-medium hidden" id="btn-precios">Precios/Servicios</button>
+                <button onclick="switchView('contabilidad')" class="nav-btn px-3 py-2 rounded-md theme-hover transition text-sm font-medium hidden" id="btn-contabilidad">Contabilidad</button>
             </nav>
 
-            <div class="flex items-center space-x-3 bg-teal-900 px-4 py-2 rounded-lg text-sm border border-teal-700">
-                <div class="text-right">
+            <!-- INFORMACIÓN DE SESIÓN Y SELECTOR DE SKIN -->
+            <div class="flex items-center space-x-3 bg-black bg-opacity-25 px-4 py-2 rounded-lg text-sm">
+                
+                <!-- BOTÓN DIMINUTO PARA SKINS -->
+                <button onclick="cycleTheme()" class="theme-text hover:text-white transition text-base p-1 mr-2" title="Cambiar Tema (Skin)">
+                    <i class="fa-solid fa-palette"></i>
+                </button>
+
+                <div class="text-right border-l border-white border-opacity-20 pl-3">
                     <p class="font-bold text-white leading-none" id="session-user-name">Administrador</p>
-                    <span class="text-[11px] text-teal-300 font-medium uppercase" id="session-user-role">Nivel Administrador</span>
+                    <span class="text-[10px] theme-text font-bold uppercase tracking-wider" id="session-user-role">Nivel Administrador</span>
                 </div>
                 <button onclick="logout()" class="text-red-400 hover:text-red-300 transition text-lg ml-2" title="Cerrar Sesión">
                     <i class="fa-solid fa-power-off"></i>
@@ -101,11 +151,6 @@
         </div>
     </header>
 
-    <!-- TOAST NOTIFICADOR -->
-    <div id="toast" class="fixed bottom-5 right-5 bg-gray-950 text-white px-4 py-3 rounded-lg shadow-xl hidden z-50 flex items-center space-x-2 transition-all">
-        <span id="toast-message">Mensaje</span>
-    </div>
-
     <!-- MAIN CONTAINER -->
     <main class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-6 hidden" id="app-main">
 
@@ -113,7 +158,7 @@
         <section id="view-dashboard" class="view-section space-y-6">
             <h2 class="text-2xl font-bold text-gray-800" id="dashboard-title">Panel General</h2>
             
-            <!-- Tarjetas de métricas rápidas (Ocultables para Doctores/Secretarias) -->
+            <!-- Tarjetas de métricas rápidas -->
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="dashboard-metrics-grid">
                 <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-blue-500">
                     <div class="text-gray-500 text-sm font-semibold uppercase">Total Pacientes</div>
@@ -133,14 +178,14 @@
                 </div>
             </div>
 
-            <!-- TABLERO DE FLUJO DIARIO (SALA DE ESPERA ACTIVA) -->
+            <!-- TABLERO DE FLUJO DIARIO (SALA DE ESPERA CON VENTANA DE 48 HORAS) -->
             <div class="space-y-3" id="dashboard-queue-board">
                 <div class="flex items-center space-x-2">
                     <i class="fa-solid fa-users-rectangle text-teal-600 text-xl"></i>
                     <h3 class="text-lg font-bold text-gray-800" id="queue-board-title">Flujo y Sala de Espera del Día</h3>
                 </div>
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                    <!-- COLUMNA 1: POR VENIR / AGENDADOS -->
+                    <!-- COLUMNA 1: POR VENIR (Ventana 48h) -->
                     <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex flex-col h-[400px]" id="column-por-venir">
                         <div class="flex justify-between items-center pb-2 border-b border-gray-100 mb-3">
                             <span class="text-sm font-bold uppercase tracking-wider text-blue-600"><i class="fa-solid fa-clock mr-1"></i> Por Venir (Citas)</span>
@@ -149,7 +194,7 @@
                         <div class="overflow-y-auto space-y-2 flex-grow" id="list-por-venir"></div>
                     </div>
 
-                    <!-- COLUMNA 2: SALA DE ESPERA (YA LLEGARON) -->
+                    <!-- COLUMNA 2: SALA DE ESPERA -->
                     <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex flex-col h-[400px]" id="column-en-espera">
                         <div class="flex justify-between items-center pb-2 border-b border-gray-100 mb-3">
                             <span class="text-sm font-bold uppercase tracking-wider text-amber-600"><i class="fa-solid fa-couch mr-1"></i> En Espera</span>
@@ -158,7 +203,7 @@
                         <div class="overflow-y-auto space-y-2 flex-grow" id="list-en-espera"></div>
                     </div>
 
-                    <!-- COLUMNA 3: EN SILLÓN (ATENDIÉNDOSE) -->
+                    <!-- COLUMNA 3: EN SILLÓN -->
                     <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex flex-col h-[400px]" id="column-en-sillon">
                         <div class="flex justify-between items-center pb-2 border-b border-gray-100 mb-3">
                             <span class="text-sm font-bold uppercase tracking-wider text-emerald-600"><i class="fa-solid fa-chair-office mr-1"></i> En Sillón / Atendiendo</span>
@@ -174,7 +219,7 @@
         <section id="view-pacientes" class="view-section hidden space-y-6">
             <div class="flex justify-between items-center">
                 <h2 class="text-2xl font-bold text-gray-800">Pacientes</h2>
-                <button onclick="openModal('modal-paciente')" class="bg-teal-800 text-white px-4 py-2 rounded shadow hover:bg-teal-900 transition">
+                <button onclick="openModal('modal-paciente')" class="theme-bg text-white px-4 py-2 rounded shadow theme-hover transition font-semibold text-sm">
                     <i class="fa-solid fa-plus mr-2"></i>Agregar Paciente
                 </button>
             </div>
@@ -184,7 +229,7 @@
                         <tr>
                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase font-mono">Cédula Identidad</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nombre Completo</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase font-mono">Teléfono Móvil</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase font-mono font-mono font-mono">Teléfono Móvil</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Familiar Responsable</th>
                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase font-mono">F. Nacimiento</th>
                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase font-mono">Acciones</th>
@@ -199,7 +244,7 @@
         <section id="view-doctores" class="view-section hidden space-y-6">
             <div class="flex justify-between items-center">
                 <h2 class="text-2xl font-bold text-gray-800">Doctores</h2>
-                <button onclick="openModal('modal-doctor')" class="bg-teal-800 text-white px-4 py-2 rounded shadow hover:bg-teal-900 transition">
+                <button onclick="openModal('modal-doctor')" class="theme-bg text-white px-4 py-2 rounded shadow theme-hover transition font-semibold text-sm">
                     <i class="fa-solid fa-plus mr-2"></i>Agregar Doctor
                 </button>
             </div>
@@ -222,7 +267,7 @@
         <section id="view-usuarios" class="view-section hidden space-y-6">
             <div class="flex justify-between items-center">
                 <h2 class="text-2xl font-bold text-gray-800">Directorio de Cuentas y Accesos</h2>
-                <button onclick="openModal('modal-usuario')" class="bg-teal-800 text-white px-4 py-2 rounded shadow hover:bg-teal-900 transition">
+                <button onclick="openModal('modal-usuario')" class="theme-bg text-white px-4 py-2 rounded shadow theme-hover transition font-semibold text-sm">
                     <i class="fa-solid fa-plus mr-2"></i>Crear Cuenta
                 </button>
             </div>
@@ -230,11 +275,11 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase font-mono">Cédula Identidad</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase font-mono font-mono">Cédula Identidad</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nombre Completo</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase font-mono">Usuario</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase font-mono">Nivel/Rol</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase font-mono">Teléfono</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase font-mono font-mono">Teléfono</th>
                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acciones</th>
                         </tr>
                     </thead>
@@ -247,7 +292,7 @@
         <section id="view-consultorios" class="view-section hidden space-y-6">
             <div class="flex justify-between items-center">
                 <h2 class="text-2xl font-bold text-gray-800">Consultorios / Sillones / Boxes</h2>
-                <button onclick="openModal('modal-consultorio')" class="bg-teal-800 text-white px-4 py-2 rounded shadow hover:bg-teal-900 transition">
+                <button onclick="openModal('modal-consultorio')" class="theme-bg text-white px-4 py-2 rounded shadow theme-hover transition font-semibold text-sm">
                     <i class="fa-solid fa-plus mr-2"></i>Agregar Consultorio
                 </button>
             </div>
@@ -256,7 +301,7 @@
                     <thead class="bg-gray-50">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nombre del Consultorio / Sillón</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Acciones</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase font-mono">Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="consultorios-tbody" class="divide-y divide-gray-200"></tbody>
@@ -268,28 +313,54 @@
         <section id="view-consultas" class="view-section hidden space-y-6">
             <div class="flex justify-between items-center">
                 <h2 class="text-2xl font-bold text-gray-800">Citas & Recordatorios</h2>
-                <button onclick="openModal('modal-consulta')" class="bg-teal-800 text-white px-4 py-2 rounded shadow hover:bg-teal-900 transition">
+                <button onclick="openModal('modal-consulta')" class="theme-bg text-white px-4 py-2 rounded shadow theme-hover transition font-semibold text-sm">
                     <i class="fa-solid fa-plus mr-2"></i>Nueva Cita
                 </button>
             </div>
+            
+            <!-- LISTADO ACTIVO -->
             <div class="bg-white rounded-lg shadow-sm overflow-x-auto">
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase font-mono">Fecha/Hora</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Paciente</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Doctor</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Servicio</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase font-mono font-mono">Costo Total</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase font-mono text-green-700">Abonado (A Cuenta)</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase font-mono text-red-700">Saldo Deuda</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase font-mono">Estatus Pago</th>
-                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">Herramientas</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase font-mono font-mono">Acciones</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase font-semibold">Paciente</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase font-semibold">Doctor</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase font-semibold">Servicio</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase font-mono">Costo Total</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase font-mono text-green-700 font-bold">Abonado (Acumulado)</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase font-mono text-red-700 font-bold">Saldo Deuda</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estatus Pago</th>
+                            <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase font-mono">Herramientas</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase font-mono">Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="consultas-tbody" class="divide-y divide-gray-200"></tbody>
                 </table>
+            </div>
+
+            <!-- SECCIÓN DE AUDITORÍA: PAPELERA DE RECICLAJE (EXCLUSIVO ADMINISTRADOR) -->
+            <div id="admin-trash-section" class="hidden bg-gray-50 p-6 rounded-lg border border-red-200 space-y-4">
+                <div class="flex items-center space-x-2 text-red-700">
+                    <i class="fa-solid fa-trash-can-arrow-up text-xl"></i>
+                    <h3 class="text-lg font-bold">Papelera de Citas Eliminadas (Historial de Auditoría)</h3>
+                </div>
+                <p class="text-xs text-gray-600">Registro protegido contra fraudes o pérdidas de datos. Solo un administrador puede ver y restaurar estos registros.</p>
+                <div class="overflow-x-auto bg-white rounded-lg shadow-sm border border-gray-100">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase font-mono">Fecha/Hora</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Paciente</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Doctor</th>
+                                <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Servicio</th>
+                                <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase font-mono">Costo</th>
+                                <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="consultas-trash-tbody" class="divide-y divide-gray-100"></tbody>
+                    </table>
+                </div>
             </div>
         </section>
 
@@ -297,7 +368,7 @@
         <section id="view-precios" class="view-section hidden space-y-6">
             <div class="flex justify-between items-center">
                 <h2 class="text-2xl font-bold text-gray-800">Catálogo de Servicios y Precios</h2>
-                <button onclick="openModal('modal-servicio')" class="bg-teal-800 text-white px-4 py-2 rounded shadow hover:bg-teal-900 transition">
+                <button onclick="openModal('modal-servicio')" class="theme-bg text-white px-4 py-2 rounded shadow theme-hover transition font-semibold text-sm">
                     <i class="fa-solid fa-plus mr-2"></i>Agregar Servicio
                 </button>
             </div>
@@ -305,9 +376,9 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tratamiento</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase font-semibold">Tratamiento</th>
                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase font-mono">Costo Base ($)</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase font-mono font-mono">Acciones</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase font-mono">Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="servicios-tbody" class="divide-y divide-gray-200"></tbody>
@@ -319,7 +390,7 @@
         <section id="view-contabilidad" class="view-section hidden space-y-6">
             <div class="flex justify-between items-center">
                 <h2 class="text-2xl font-bold text-gray-800">Caja y Contabilidad</h2>
-                <button onclick="openModal('modal-transaccion')" class="bg-teal-800 text-white px-4 py-2 rounded shadow hover:bg-teal-900 transition">
+                <button onclick="openModal('modal-transaccion')" class="theme-bg text-white px-4 py-2 rounded shadow theme-hover transition font-semibold text-sm">
                     <i class="fa-solid fa-plus mr-2"></i>Registrar Transacción
                 </button>
             </div>
@@ -343,12 +414,12 @@
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase font-mono font-mono font-mono">Fecha</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase font-mono">Concepto</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase font-mono font-mono font-mono font-mono">Tipo</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase font-mono font-mono font-mono font-mono font-mono">Método</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase font-mono font-mono font-mono font-mono font-mono font-mono">Monto ($)</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase font-mono font-mono">Acción</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase font-mono font-mono font-mono font-medium">Fecha</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase font-medium font-semibold">Concepto</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase font-mono font-mono font-mono font-medium font-semibold">Tipo</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase font-mono font-mono font-mono font-semibold font-medium">Método</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase font-mono font-mono font-mono font-mono font-mono font-medium">Monto ($)</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase font-mono font-medium font-semibold">Acción</th>
                             </tr>
                         </thead>
                         <tbody id="contabilidad-tbody" class="divide-y divide-gray-200"></tbody>
@@ -358,355 +429,6 @@
         </section>
 
     </main>
-
-    <!-- MODAL VISTA PREVIA WHATSAPP / RECETA -->
-    <div id="modal-whatsapp-preview" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-lg">
-            <div class="flex items-center space-x-3 text-green-600 mb-4">
-                <i class="fa-brands fa-whatsapp text-3xl"></i>
-                <h3 class="text-xl font-bold text-gray-800">Preparar Indicaciones y Receta</h3>
-            </div>
-            <p class="text-sm text-gray-600 mb-4">Puede refinar el texto de la receta e indicaciones clínicas antes de enviarlo por WhatsApp:</p>
-            <input type="hidden" id="wpp-consulta-id">
-            <input type="hidden" id="wpp-telefono">
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold uppercase text-gray-500">Paciente</label>
-                    <div class="text-sm font-medium text-gray-800 mt-1" id="wpp-destinatario">Paciente</div>
-                </div>
-                <div>
-                    <label class="block text-xs font-semibold uppercase text-gray-500">Receta Médica & Mensaje</label>
-                    <textarea id="wpp-mensaje-texto" rows="6" class="mt-1 block w-full border border-gray-300 rounded-md p-3 text-sm focus:ring-teal-500 focus:border-teal-500"></textarea>
-                </div>
-            </div>
-            <div class="flex justify-end space-x-3 mt-6">
-                <button type="button" onclick="closeModal('modal-whatsapp-preview')" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">Cancelar</button>
-                <button type="button" onclick="executeWhatsAppSend()" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded flex items-center font-semibold text-sm">
-                    <i class="fa-brands fa-whatsapp mr-2 text-base"></i> Abrir WhatsApp e Iniciar
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL PACIENTE -->
-    <div id="modal-paciente" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
-            <h3 class="text-xl font-bold text-gray-800 mb-4" id="paciente-modal-title">Agregar Paciente</h3>
-            <form id="form-paciente" onsubmit="savePaciente(event)">
-                <input type="hidden" id="paciente-id">
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Cédula de Identidad (Sólo Números)</label>
-                        <input type="text" id="paciente-cedula" required inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')" class="mt-1 block w-full border border-gray-300 rounded-md p-2">
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Nombres</label>
-                            <input type="text" id="paciente-nombre" required class="mt-1 block w-full border border-gray-300 rounded-md p-2">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Apellidos</label>
-                            <input type="text" id="paciente-apellidos" required class="mt-1 block w-full border border-gray-300 rounded-md p-2">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Móvil Celular (Código de país sin '+')</label>
-                        <input type="text" id="paciente-telefono" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 text-right font-mono" placeholder="Ej: 5215555555555">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Email (Opcional - puede quedar vacío)</label>
-                        <input type="email" id="paciente-email" class="mt-1 block w-full border border-gray-300 rounded-md p-2" placeholder="paciente@ejemplo.com">
-                    </div>
-                    
-                    <div class="bg-teal-50 p-3 rounded-md border border-teal-200 space-y-3">
-                        <div class="flex items-center">
-                            <input type="checkbox" id="paciente-es-menor" onchange="toggleTutorFields()" class="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded">
-                            <label for="paciente-es-menor" class="ml-2 block text-xs font-bold text-teal-800 uppercase tracking-wider">¿Es menor de edad / dependiente?</label>
-                        </div>
-                        <div id="tutor-fields" class="hidden space-y-2">
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-700">Seleccionar Tutor / Adulto Responsable</label>
-                                <select id="paciente-tutor-id" class="mt-1 block w-full border border-gray-300 rounded-md p-1.5 text-xs bg-white"></select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-semibold text-gray-700">Parentesco / Relación Familiar</label>
-                                <input type="text" id="paciente-parentesco" placeholder="Ej: Madre, Padre, Abuelo..." class="mt-1 block w-full border border-gray-300 rounded-md p-1.5 text-xs">
-                            </div>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Fecha de Nacimiento</label>
-                        <input type="date" id="paciente-fechaNac" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 text-right font-mono">
-                    </div>
-                </div>
-                <div class="flex justify-end space-x-3 mt-6">
-                    <button type="button" onclick="closeModal('modal-paciente')" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">Cancelar</button>
-                    <button type="submit" class="bg-teal-800 text-white px-4 py-2 rounded hover:bg-teal-900 font-semibold font-mono">Guardar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL DOCTOR -->
-    <div id="modal-doctor" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
-            <h3 class="text-xl font-bold text-gray-800 mb-4" id="doctor-modal-title">Agregar Doctor</h3>
-            <form id="form-doctor" onsubmit="saveDoctor(event)">
-                <input type="hidden" id="doctor-id">
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Nombre Completo</label>
-                        <input type="text" id="doctor-nombre" required class="mt-1 block w-full border border-gray-300 rounded-md p-2">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Especialidad</label>
-                        <input type="text" id="doctor-especialidad" required class="mt-1 block w-full border border-gray-300 rounded-md p-2">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Teléfono Móvil</label>
-                        <input type="text" id="doctor-telefono" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 text-right font-mono" placeholder="Ej. 5215555555555">
-                    </div>
-                </div>
-                <div class="flex justify-end space-x-3 mt-6">
-                    <button type="button" onclick="closeModal('modal-doctor')" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">Cancelar</button>
-                    <button type="submit" class="bg-teal-800 text-white px-4 py-2 rounded hover:bg-teal-900 font-semibold">Guardar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL USUARIO / PERSONAL -->
-    <div id="modal-usuario" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
-            <h3 class="text-xl font-bold text-gray-800 mb-4" id="usuario-modal-title">Crear Cuenta de Personal</h3>
-            <form id="form-usuario" onsubmit="saveUsuario(event)">
-                <input type="hidden" id="usuario-id">
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Cédula de Identidad (Sólo Números)</label>
-                        <input type="text" id="usuario-cedula" required inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')" class="mt-1 block w-full border border-gray-300 rounded-md p-2">
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Nombres</label>
-                            <input type="text" id="usuario-nombre" required class="mt-1 block w-full border border-gray-300 rounded-md p-2">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Apellidos</label>
-                            <input type="text" id="usuario-apellidos" required class="mt-1 block w-full border border-gray-300 rounded-md p-2">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Nivel de Acceso / Rol</label>
-                        <select id="usuario-rol" required onchange="toggleDoctorLinkField()" class="mt-1 block w-full border border-gray-300 rounded-md p-2 bg-gray-50">
-                            <option value="SECRETARIA">SECRETARIA</option>
-                            <option value="DOCTOR">DOCTOR</option>
-                            <option value="ADMINISTRADOR">ADMINISTRADOR</option>
-                        </select>
-                    </div>
-                    
-                    <div id="user-doctor-link-field" class="hidden bg-gray-50 p-3 rounded border border-gray-200">
-                        <label class="block text-xs font-bold text-gray-700 uppercase">Vincular con Ficha de Doctor</label>
-                        <select id="usuario-doctor-id" class="mt-1 block w-full border border-gray-300 rounded-md p-2 bg-white text-sm"></select>
-                    </div>
-
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Nombre de Usuario</label>
-                            <input type="text" id="usuario-username" required class="mt-1 block w-full border border-gray-300 rounded-md p-2">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Contraseña</label>
-                            <div class="relative">
-                                <input type="password" id="usuario-password" required class="block w-full border border-gray-300 rounded-md p-2 pr-10">
-                                <button type="button" onclick="togglePasswordVisibility('usuario-password', 'eye-user-create')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-teal-600">
-                                    <i id="eye-user-create" class="fa-solid fa-eye-slash"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Teléfono Móvil</label>
-                        <input type="text" id="usuario-telefono" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 text-right font-mono">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Email (Opcional)</label>
-                        <input type="email" id="usuario-email" class="mt-1 block w-full border border-gray-300 rounded-md p-2">
-                    </div>
-                </div>
-                <div class="flex justify-end space-x-3 mt-6">
-                    <button type="button" onclick="closeModal('modal-usuario')" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">Cancelar</button>
-                    <button type="submit" class="bg-teal-800 text-white px-4 py-2 rounded hover:bg-teal-900 font-semibold">Guardar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL CONSULTORIO -->
-    <div id="modal-consultorio" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-sm">
-            <h3 class="text-xl font-bold text-gray-800 mb-4" id="consultorio-modal-title">Agregar Consultorio / Sillón</h3>
-            <form id="form-consultorio" onsubmit="saveConsultorio(event)">
-                <input type="hidden" id="consultorio-id">
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Nombre / Identificador del Sillón</label>
-                        <input type="text" id="consultorio-nombre" required placeholder="Ej: Sillón Azul, Box Dental 2" class="mt-1 block w-full border border-gray-300 rounded-md p-2 text-sm">
-                    </div>
-                </div>
-                <div class="flex justify-end space-x-3 mt-6">
-                    <button type="button" onclick="closeModal('modal-consultorio')" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">Cancelar</button>
-                    <button type="submit" class="bg-teal-800 text-white px-4 py-2 rounded hover:bg-teal-900 font-semibold">Guardar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL SERVICIO -->
-    <div id="modal-servicio" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
-            <h3 class="text-xl font-bold text-gray-800 mb-4" id="servicio-modal-title">Agregar Servicio</h3>
-            <form id="form-servicio" onsubmit="saveServicio(event)">
-                <input type="hidden" id="servicio-id">
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Nombre del Tratamiento</label>
-                        <input type="text" id="servicio-nombre" required class="mt-1 block w-full border border-gray-300 rounded-md p-2">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Precio Base ($)</label>
-                        <input type="number" step="0.01" min="0" id="servicio-costo" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 text-right font-mono">
-                    </div>
-                </div>
-                <div class="flex justify-end space-x-3 mt-6">
-                    <button type="button" onclick="closeModal('modal-servicio')" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">Cancelar</button>
-                    <button type="submit" class="bg-teal-800 text-white px-4 py-2 rounded hover:bg-teal-900 font-semibold">Guardar</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL CONSULTA -->
-    <div id="modal-consulta" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-lg">
-            <h3 class="text-xl font-bold text-gray-800 mb-4" id="consulta-modal-title">Programar Cita</h3>
-            <form id="form-consulta" onsubmit="saveConsulta(event)">
-                <input type="hidden" id="consulta-id">
-                <div class="space-y-4">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Paciente</label>
-                            <select id="consulta-paciente" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 bg-gray-50 text-sm font-medium"></select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Doctor</label>
-                            <select id="consulta-doctor" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 bg-gray-50 text-sm font-medium"></select>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-3 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Servicio Programado</label>
-                            <select id="consulta-servicio" required onchange="applyBasePrice()" class="mt-1 block w-full border border-gray-300 rounded-md p-2 bg-gray-50 text-sm font-medium"></select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Sillón / Consultorio</label>
-                            <select id="consulta-consultorio-id" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 bg-gray-50 text-sm font-medium"></select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Fecha y Hora</label>
-                            <input type="datetime-local" id="consulta-fecha" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 text-right text-sm">
-                        </div>
-                    </div>
-
-                    <!-- SECCIÓN CLÍNICA -->
-                    <div class="border-t border-gray-200 pt-3 space-y-3">
-                        <span class="text-xs font-bold uppercase tracking-wider text-teal-600 block">Fase Clínica (Tratamiento, Receta y Cobros)</span>
-                        <div class="grid grid-cols-4 gap-2">
-                            <div>
-                                <label class="block text-xs font-medium text-gray-700">Estatus Clínico</label>
-                                <select id="consulta-estado" class="mt-1 block w-full border border-gray-300 rounded-md p-1.5 bg-gray-50 text-xs font-medium">
-                                    <option value="Pendiente">Pendiente</option>
-                                    <option value="En Espera">En Espera</option>
-                                    <option value="En Sillón">En Sillón</option>
-                                    <option value="Completada">Completada</option>
-                                    <option value="Cancelada">Cancelada</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-gray-700">Costo Final ($)</label>
-                                <input type="number" step="0.01" min="0" id="consulta-costo" required class="mt-1 block w-full border border-gray-300 rounded-md p-1.5 text-right font-mono text-xs">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-gray-700">Monto Abonado ($)</label>
-                                <input type="number" step="0.01" min="0" id="consulta-monto-pagado" required class="mt-1 block w-full border border-gray-300 rounded-md p-1.5 text-right font-mono text-xs">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-medium text-gray-700">Método de Pago</label>
-                                <select id="consulta-metodo-pago" class="mt-1 block w-full border border-gray-300 rounded-md p-1.5 bg-gray-50 text-xs font-medium">
-                                    <option value="Efectivo">Efectivo</option>
-                                    <option value="Tarjeta">Tarjeta</option>
-                                    <option value="QR">QR</option>
-                                </select>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Receta Médica / Medicación / Indicaciones</label>
-                            <textarea id="consulta-receta" rows="3" placeholder="Ingresar medicamentos e indicaciones de cuidado..." class="mt-1 block w-full border border-gray-300 rounded-md p-2 text-sm" style="resize: none;"></textarea>
-                        </div>
-                    </div>
-                </div>
-                <div class="flex justify-end space-x-3 mt-6">
-                    <button type="button" onclick="closeModal('modal-consulta')" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">Cancelar</button>
-                    <button type="submit" class="bg-teal-800 text-white px-4 py-2 rounded hover:bg-teal-900 font-semibold font-mono">Guardar Cita</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- MODAL TRANSACCION -->
-    <div id="modal-transaccion" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
-            <h3 class="text-xl font-bold text-gray-800 mb-4">Registrar Movimiento</h3>
-            <form id="form-transaccion" onsubmit="saveTransaccion(event)">
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Concepto / Descripción</label>
-                        <input type="text" id="transaccion-concepto" required class="mt-1 block w-full border border-gray-300 rounded-md p-2">
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Tipo de Movimiento</label>
-                            <select id="transaccion-tipo" class="mt-1 block w-full border border-gray-300 rounded-md p-2 bg-gray-50">
-                                <option value="Egreso">Egreso (Gasto)</option>
-                                <option value="Ingreso">Ingreso</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700">Método de Operación</label>
-                            <select id="transaccion-metodo-pago" class="mt-1 block w-full border border-gray-300 rounded-md p-2 bg-gray-50">
-                                <option value="Efectivo">Efectivo</option>
-                                <option value="Tarjeta">Tarjeta</option>
-                                <option value="QR">QR</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Monto ($)</label>
-                        <input type="number" step="0.01" min="0.01" id="transaccion-monto" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 text-right font-mono">
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">Fecha de Registro</label>
-                        <input type="date" id="transaccion-fecha" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 text-right">
-                    </div>
-                </div>
-                <div class="flex justify-end space-x-3 mt-6">
-                    <button type="button" onclick="closeModal('modal-transaccion')" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400">Cancelar</button>
-                    <button type="submit" class="bg-teal-800 text-white px-4 py-2 rounded hover:bg-teal-900 font-semibold font-mono">Registrar</button>
-                </div>
-            </form>
-        </div>
-    </div>
 
     <!-- ================= CONTROLADOR JS / INTEGRACIÓN ================= -->
     <script>
@@ -723,6 +445,38 @@
 
         let isLoginAdminMode = false; 
 
+        // Gestión de Skins
+        const themes = ['teal', 'navy', 'dark', 'purple'];
+        let currentTheme = localStorage.getItem('odontosell_theme') || 'teal';
+
+        function applyTheme(themeName) {
+            document.body.setAttribute('data-theme', themeName);
+            localStorage.setItem('odontosell_theme', themeName);
+        }
+
+        function cycleTheme() {
+            let idx = themes.indexOf(currentTheme);
+            idx = (idx + 1) % themes.length;
+            currentTheme = themes[idx];
+            applyTheme(currentTheme);
+            showNotification(`Diseño cambiado a: ${currentTheme.toUpperCase()}`);
+        }
+
+        // Toggles Menú Móvil (Evita "Apeñuzcado")
+        function toggleMobileMenu() {
+            const nav = document.getElementById('app-nav');
+            const icon = document.getElementById('hamburger-icon');
+            if (nav.classList.contains('hidden')) {
+                nav.classList.remove('hidden');
+                icon.classList.remove('fa-bars');
+                icon.classList.add('fa-xmark');
+            } else {
+                nav.classList.add('hidden');
+                icon.classList.remove('fa-xmark');
+                icon.classList.add('fa-bars');
+            }
+        }
+
         function showNotification(text) {
             const toast = document.getElementById('toast');
             document.getElementById('toast-message').innerText = text;
@@ -735,6 +489,7 @@
         async function initConnection() {
             try {
                 supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                applyTheme(currentTheme); // Aplicar tema al iniciar
                 await fetchInitialLoginState();
                 return true;
             } catch (err) {
@@ -743,7 +498,7 @@
             }
         }
 
-        // ================= CAMBIAR VISIBILIDAD DE CONTRASEÑA =================
+        // ================= CONMUTADOR VISIBILIDAD DE CONTRASEÑA =================
         function togglePasswordVisibility(inputId, iconId) {
             const input = document.getElementById(inputId);
             const icon = document.getElementById(iconId);
@@ -946,6 +701,8 @@
             const dashboardMetricsGrid = document.getElementById('dashboard-metrics-grid');
             const queueBoardTitle = document.getElementById('queue-board-title');
 
+            const adminTrashSection = document.getElementById('admin-trash-section');
+
             if (currentSessionRole === 'ADMINISTRADOR') {
                 btnDoctores.classList.remove('hidden');
                 btnUsuarios.classList.remove('hidden');
@@ -956,6 +713,7 @@
                 dashboardMetricCaja.classList.remove('hidden');
                 dashboardMetricsGrid.classList.remove('hidden');
                 queueBoardTitle.innerText = "Flujo y Sala de Espera del Día";
+                adminTrashSection.classList.remove('hidden'); // Ver Papelera de Citas
             } else if (currentSessionRole === 'DOCTOR') {
                 btnDoctores.classList.add('hidden');
                 btnUsuarios.classList.add('hidden');
@@ -966,6 +724,7 @@
                 dashboardMetricCaja.classList.add('hidden');
                 dashboardMetricsGrid.classList.add('hidden'); 
                 queueBoardTitle.innerText = "Mi Consultorio Clínico - Agenda de Hoy";
+                adminTrashSection.classList.add('hidden');
             } else {
                 btnDoctores.classList.add('hidden');
                 btnUsuarios.classList.add('hidden');
@@ -976,6 +735,7 @@
                 dashboardMetricCaja.classList.add('hidden');
                 dashboardMetricsGrid.classList.remove('hidden');
                 queueBoardTitle.innerText = "Flujo y Sala de Espera del Día";
+                adminTrashSection.classList.add('hidden');
             }
         }
 
@@ -995,6 +755,14 @@
             document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('bg-teal-950', 'font-semibold'));
             const active = document.getElementById(`btn-${viewId}`);
             if (active) active.classList.add('bg-teal-950', 'font-semibold');
+
+            // Colapsar menú móvil al cambiar de pestaña
+            if(window.innerWidth < 768) {
+                document.getElementById('app-nav').classList.add('hidden');
+                const icon = document.getElementById('hamburger-icon');
+                icon.classList.remove('fa-xmark');
+                icon.classList.add('fa-bars');
+            }
         }
 
         function closeModal(modalId) {
@@ -1069,7 +837,7 @@
             }
         }
 
-        // ================= DOCTORES CONTROLLER =================
+        // ================= CONECTORES DE CONTROLES INDIVIDUALES =================
         async function saveDoctor(e) {
             e.preventDefault();
             if (!supabaseClient) return;
@@ -1101,33 +869,6 @@
             }
         }
 
-        function editDoctor(id) {
-            const d = localState.doctores.find(x => x.id === id);
-            if (!d) return;
-            document.getElementById('doctor-id').value = d.id;
-            document.getElementById('doctor-nombre').value = d.nombre;
-            document.getElementById('doctor-especialidad').value = d.especialidad;
-            document.getElementById('doctor-telefono').value = d.telefono;
-            document.getElementById('doctor-modal-title').innerText = "Editar Doctor";
-            openModal('modal-doctor');
-        }
-
-        async function deleteDoctor(id) {
-            if (!supabaseClient) return;
-            if (confirm("¿Seguro que desea eliminar este doctor?")) {
-                try {
-                    const { error } = await supabaseClient.from('doctores').delete().eq('id', id);
-                    if (error) throw error;
-                    showNotification("Doctor eliminado.");
-                    fetchAllData();
-                } catch (err) {
-                    console.error("Error:", err);
-                    showNotification("No se pudo borrar el registro.");
-                }
-            }
-        }
-
-        // ================= USUARIOS CONTROLLER (PERSONAL) =================
         async function saveUsuario(e) {
             e.preventDefault();
             if (!supabaseClient) return;
@@ -1191,96 +932,6 @@
             }
         }
 
-        function editUsuario(id) {
-            const u = localState.usuarios.find(x => x.id === id);
-            if (!u) return;
-            document.getElementById('usuario-id').value = u.id;
-            document.getElementById('usuario-cedula').value = u.cedula;
-            document.getElementById('usuario-nombre').value = u.nombre;
-            document.getElementById('usuario-apellidos').value = u.apellidos;
-            document.getElementById('usuario-rol').value = u.rol;
-            toggleDoctorLinkField();
-            if (u.rol === 'DOCTOR') {
-                document.getElementById('usuario-doctor-id').value = u.doctor_id || '';
-            }
-            document.getElementById('usuario-username').value = u.usuario;
-            document.getElementById('usuario-password').value = u.contrasena;
-            document.getElementById('usuario-telefono').value = u.telefono;
-            document.getElementById('usuario-email').value = u.email || '';
-            document.getElementById('usuario-modal-title').innerText = "Editar Cuenta de Acceso";
-            openModal('modal-usuario');
-        }
-
-        async function deleteUsuario(id) {
-            if (!supabaseClient) return;
-            if (confirm("¿Seguro que desea eliminar esta cuenta? El usuario perderá acceso inmediato.")) {
-                try {
-                    const { error } = await supabaseClient.from('usuarios').delete().eq('id', id);
-                    if (error) throw error;
-                    showNotification("Cuenta de usuario eliminada.");
-                    fetchAllData();
-                } catch (err) {
-                    console.error("Error:", err);
-                    showNotification("Error de procesamiento.");
-                }
-            }
-        }
-
-        // ================= CONSULTORIOS CONTROLLER =================
-        async function saveConsultorio(e) {
-            e.preventDefault();
-            if (!supabaseClient) return;
-            try {
-                const id = document.getElementById('consultorio-id').value;
-                const data = {
-                    nombre: document.getElementById('consultorio-nombre').value.trim()
-                };
-
-                let error;
-                if (id) {
-                    const res = await supabaseClient.from('consultorios').update(data).eq('id', id);
-                    error = res.error;
-                } else {
-                    const res = await supabaseClient.from('consultorios').insert([data]);
-                    error = res.error;
-                }
-                
-                if (error) throw error;
-
-                closeModal('modal-consultorio');
-                showNotification("Sillón/Consultorio guardado.");
-                fetchAllData();
-            } catch (err) {
-                console.error("Error al guardar consultorio:", err);
-                showNotification("Fallo al guardar consultorio. Nombre duplicado u otro error.");
-            }
-        }
-
-        function editConsultorio(id) {
-            const c = localState.consultorios.find(x => x.id === id);
-            if (!c) return;
-            document.getElementById('consultorio-id').value = c.id;
-            document.getElementById('consultorio-nombre').value = c.nombre;
-            document.getElementById('consultorio-modal-title').innerText = "Editar Identificación Sillón";
-            openModal('modal-consultorio');
-        }
-
-        async function deleteConsultorio(id) {
-            if (!supabaseClient) return;
-            if (confirm("¿Desea eliminar este consultorio/sillón?")) {
-                try {
-                    const { error } = await supabaseClient.from('consultorios').delete().eq('id', id);
-                    if (error) throw error;
-                    showNotification("Consultorio/Sillón removido.");
-                    fetchAllData();
-                } catch (err) {
-                    console.error("Error:", err);
-                    showNotification("No se puede borrar (puede tener citas asignadas).");
-                }
-            }
-        }
-
-        // ================= SERVICIOS CONTROLLER =================
         async function saveServicio(e) {
             e.preventDefault();
             if (!supabaseClient) return;
@@ -1310,32 +961,6 @@
             }
         }
 
-        function editServicio(id) {
-            const s = localState.servicios.find(x => x.id === id);
-            if (!s) return;
-            document.getElementById('servicio-id').value = s.id;
-            document.getElementById('servicio-nombre').value = s.nombre;
-            document.getElementById('servicio-costo').value = s.costo;
-            document.getElementById('servicio-modal-title').innerText = "Editar Servicio";
-            openModal('modal-servicio');
-        }
-
-        async function deleteServicio(id) {
-            if (!supabaseClient) return;
-            if (confirm("¿Desea eliminar este tratamiento del catálogo?")) {
-                try {
-                    const { error } = await supabaseClient.from('servicios').delete().eq('id', id);
-                    if (error) throw error;
-                    showNotification("Servicio eliminado.");
-                    fetchAllData();
-                } catch (err) {
-                    console.error("Error:", err);
-                    showNotification("Error al eliminar el tratamiento.");
-                }
-            }
-        }
-
-        // ================= PACIENTES CONTROLLER =================
         async function savePaciente(e) {
             e.preventDefault();
             if (!supabaseClient) return;
@@ -1395,45 +1020,7 @@
             }
         }
 
-        function editPaciente(id) {
-            const p = localState.pacientes.find(x => x.id === id);
-            if (!p) return;
-            document.getElementById('paciente-id').value = p.id;
-            document.getElementById('paciente-cedula').value = p.cedula || '';
-            document.getElementById('paciente-nombre').value = p.nombre || '';
-            document.getElementById('paciente-apellidos').value = p.apellidos || '';
-            document.getElementById('paciente-telefono').value = p.telefono || '';
-            document.getElementById('paciente-email').value = p.email || '';
-            document.getElementById('paciente-fechaNac').value = p.fecha_nacimiento || '';
-
-            const esMenor = p.tutor_id !== null;
-            document.getElementById('paciente-es-menor').checked = esMenor;
-            toggleTutorFields();
-            if (esMenor) {
-                document.getElementById('paciente-tutor-id').value = p.tutor_id;
-                document.getElementById('paciente-parentesco').value = p.parentesco || '';
-            }
-
-            document.getElementById('paciente-modal-title').innerText = "Editar Paciente";
-            openModal('modal-paciente');
-        }
-
-        async function deletePaciente(id) {
-            if (!supabaseClient) return;
-            if (confirm("¿Eliminar este paciente del sistema?")) {
-                try {
-                    const { error } = await supabaseClient.from('pacientes').delete().eq('id', id);
-                    if (error) throw error;
-                    showNotification("Paciente eliminado.");
-                    fetchAllData();
-                } catch (err) {
-                    console.error("Error:", err);
-                    showNotification("No se puede borrar el paciente (puede tener citas activas).");
-                }
-            }
-        }
-
-        // ================= CONSULTAS CONTROLLER (PAGOS PARCIALES) =================
+        // ================= CONSULTAS CONTROLLER (PAGOS CRONOLÓGICOS DETALLADOS) =================
         async function saveConsulta(e) {
             e.preventDefault();
             if (!supabaseClient) return;
@@ -1447,19 +1034,61 @@
                 const estado = document.getElementById('consulta-estado').value;
                 const receta = document.getElementById('consulta-receta').value;
                 const costo = parseFloat(document.getElementById('consulta-costo').value) || 0.00;
-                const monto_pagado = parseFloat(document.getElementById('consulta-monto-pagado').value) || 0.00;
-                const metodo_pago = document.getElementById('consulta-metodo-pago').value;
+                
+                // El monto ingresado hoy representa el "nuevo abono" realizado
+                const nuevo_abono = parseFloat(document.getElementById('consulta-monto-pagado').value) || 0.00;
+
+                // PREVENCIÓN DE DOBLE CITA EL MISMO DÍA (EVITA SOBRE-RESERVA)
+                const selectedDateStr = fecha_hora.split('T')[0];
+                const duplicadoHoy = localState.consultas.find(c => 
+                    c.paciente_id === paciente_id && 
+                    c.fecha_hora.startsWith(selectedDateStr) && 
+                    c.id !== id
+                );
+
+                if (duplicadoHoy) {
+                    const pacObj = localState.pacientes.find(p => p.id === paciente_id);
+                    const docObj = localState.doctores.find(d => d.id === duplicadoHoy.doctor_id);
+                    const horaCita = duplicadoHoy.fecha_hora.slice(11, 16);
+
+                    const proceed = confirm(
+                        `⚠️ ALERTA DE DUPLICIDAD:\n` +
+                        `El paciente "${pacObj ? pacObj.nombre : 'Paciente'} ${pacObj ? (pacObj.apellidos || '') : ''}" ya tiene una cita registrada para HOY a las ${horaCita} con el Dr. ${docObj ? docObj.nombre : 'Doctor'}.\n\n` +
+                        `¿Desea programar esta segunda cita de todas formas?`
+                    );
+                    if (!proceed) return; 
+                }
+
+                // Calcular el acumulado anterior
+                const c_original = id ? localState.consultas.find(x => x.id === id) : null;
+                const acumulado_anterior = c_original ? (parseFloat(c_original.monto_pagado) || 0.00) : 0.00;
+
+                // El nuevo total pagado es la suma del anterior acumulado y el nuevo abono ingresado hoy
+                const nuevo_monto_total_pagado = acumulado_anterior + nuevo_abono;
 
                 let pago = 'No Pagado';
-                if (monto_pagado > 0) {
-                    if (monto_pagado >= costo) {
+                if (nuevo_monto_total_pagado > 0) {
+                    if (nuevo_monto_total_pagado >= costo) {
                         pago = 'Pagado';
                     } else {
                         pago = 'A Cuenta';
                     }
                 }
 
-                const data = { paciente_id, doctor_id, servicio_id, consultorio_id, fecha_hora, estado, pago, costo, monto_pagado, receta, metodo_pago };
+                const metodo_pago = document.getElementById('consulta-metodo-pago').value;
+
+                const data = { 
+                    paciente_id, 
+                    doctor_id, 
+                    servicio_id, 
+                    consultorio_id, 
+                    fecha_hora, 
+                    estado, 
+                    pago, 
+                    costo, 
+                    monto_pagado: nuevo_monto_total_pagado, // Guardamos la suma acumulada
+                    receta 
+                };
 
                 let result;
                 if (id) {
@@ -1470,29 +1099,23 @@
 
                 if (result.error) throw result.error;
 
+                // AUDITORÍA PERFECTA: Si se hizo un abono hoy, se crea una NUEVA transacción contable independiente
                 if (result.data && result.data.length > 0) {
                     const conDoc = result.data[0];
-                    if (monto_pagado > 0) {
+                    if (nuevo_abono > 0) {
                         const pacObj = localState.pacientes.find(p => p.id === paciente_id);
                         const fullPacName = `${pacObj ? pacObj.nombre : 'General'} ${pacObj ? (pacObj.apellidos || '') : ''}`;
                         const desc = `Abono de tratamiento - Paciente: ${fullPacName}`;
                         
-                        const { data: ext } = await supabaseClient.from('transacciones').select('id').eq('consulta_id', conDoc.id);
-                        
-                        if (!ext || ext.length === 0) {
-                            await supabaseClient.from('transacciones').insert([{
-                                concepto: desc,
-                                tipo: 'Ingreso',
-                                monto: monto_pagado,
-                                metodo_pago: metodo_pago,
-                                fecha: new Date().toISOString().split('T')[0],
-                                consulta_id: conDoc.id
-                            }]);
-                        } else {
-                            await supabaseClient.from('transacciones').update({ monto: monto_pagado, metodo_pago: metodo_pago }).eq('consulta_id', conDoc.id);
-                        }
-                    } else {
-                        await supabaseClient.from('transacciones').delete().eq('consulta_id', conDoc.id);
+                        // Creamos un nuevo registro de transacción contable con fecha de hoy
+                        await supabaseClient.from('transacciones').insert([{
+                            concepto: desc,
+                            tipo: 'Ingreso',
+                            monto: nuevo_abono, // Guarda el nuevo abono individual cobrado hoy
+                            metodo_pago: metodo_pago,
+                            fecha: new Date().toISOString().split('T')[0],
+                            consulta_id: conDoc.id
+                        }]);
                     }
                 }
 
@@ -1517,35 +1140,96 @@
             document.getElementById('consulta-fecha').value = c.fecha_hora.slice(0, 16);
             document.getElementById('consulta-estado').value = c.estado;
             document.getElementById('consulta-costo').value = c.costo || 0;
-            document.getElementById('consulta-monto-pagado').value = c.monto_pagado || 0;
-            document.getElementById('consulta-metodo-pago').value = c.metodo_pago || 'Efectivo';
+            
+            // El campo de abono hoy se inicia en 0.00 para obligar a registrar solo el nuevo abono
+            document.getElementById('consulta-monto-pagado').value = "0.00";
+            document.getElementById('consulta-metodo-pago').value = 'Efectivo';
             document.getElementById('consulta-receta').value = c.receta || '';
+
+            // RENDERIZAR HISTORIAL DE ABONOS DENTRO DEL PROPIO MODAL DE COBRO
+            const pastPayments = localState.transacciones.filter(t => t.consulta_id === c.id);
+            const listDiv = document.getElementById('consulta-historial-pagos-list');
+            if (pastPayments.length === 0) {
+                listDiv.innerHTML = "<li>Sin abonos registrados previamente.</li>";
+            } else {
+                listDiv.innerHTML = pastPayments.map(t => `<li>• ${t.fecha} - <span class="font-bold">$${parseFloat(t.monto).toFixed(2)}</span> (${t.metodo_pago || 'Efectivo'})</li>`).join('');
+            }
+
+            document.getElementById('consulta-total-abonado-lbl').innerText = `$${parseFloat(c.monto_pagado).toFixed(2)}`;
+            const saldo = (parseFloat(c.costo) || 0) - (parseFloat(c.monto_pagado) || 0);
+            document.getElementById('consulta-saldo-deuda-lbl').innerText = `$${saldo.toFixed(2)}`;
+
             document.getElementById('consulta-modal-title').innerText = "Editar Cita / Cierre Clínico";
+        }
+
+        // Retorna la fecha de hoy en formato local YYYY-MM-DD (Evita errores de desfase UTC/GMT)
+        function getLocalYYYYMMDD(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
         }
 
         async function updateConsultaState(id, newState) {
             if (!supabaseClient) return;
             try {
-                const { error } = await supabaseClient.from('consultas').update({ estado: newState }).eq('id', id);
+                const c = localState.consultas.find(x => x.id === id);
+                if (!c) return;
+
+                const updateData = { estado: newState };
+
+                // AJUSTE OPERATIVO DE 1 CLIC: Si se adelanta y se marca "Llegó", movemos la fecha a HOY automáticamente
+                const citaDateStr = c.fecha_hora.split('T')[0];
+                const todayStr = getLocalYYYYMMDD(new Date());
+                
+                if (citaDateStr !== todayStr && newState === 'En Espera') {
+                    // Obtener fecha y hora local para registrarla en este segundo
+                    const nowLocal = new Date();
+                    const offset = nowLocal.getTimezoneOffset();
+                    const localNow = new Date(nowLocal.getTime() - (offset * 60 * 1000));
+                    const currentLocalIso = localNow.toISOString().slice(0, 16);
+                    
+                    updateData.fecha_hora = currentLocalIso;
+                }
+
+                const { error } = await supabaseClient.from('consultas').update(updateData).eq('id', id);
                 if (error) throw error;
-                showNotification(`Paciente movido de estado.`);
+                
+                showNotification(`Estado de cita actualizado.`);
                 fetchAllData();
             } catch(err) {
                 console.error("Error al mover estado:", err);
             }
         }
 
+        // AUDITORÍA INTEGRAL: Las secretarias hacen "Borrado Lógico". Las consultas cambian a estado "Eliminada".
         async function deleteConsulta(id) {
             if (!supabaseClient) return;
-            if (confirm("¿Desea cancelar y eliminar esta cita de la base de datos?")) {
+            if (confirm("¿Desea eliminar este registro de la agenda activa?")) {
                 try {
-                    const { error } = await supabaseClient.from('consultas').delete().eq('id', id);
+                    // Cambiamos el estado a 'Eliminada'. Esto la remueve de la vista clínica
+                    const { error } = await supabaseClient.from('consultas').update({ estado: 'Eliminada' }).eq('id', id);
                     if (error) throw error;
-                    showNotification("Cita eliminada.");
+                    showNotification("Cita enviada a la papelera de auditoría.");
                     fetchAllData();
                 } catch (err) {
-                    showNotification("No se pudo completar.");
+                    console.error("Error al eliminar consulta:", err);
+                    showNotification("Error de procesamiento.");
                 }
+            }
+        }
+
+        // ACCIÓN EXCLUSIVA DE ADMIN: Restaurar citas borradas por error de la papelera
+        async function restoreConsulta(id) {
+            if (!supabaseClient) return;
+            try {
+                const { error } = await supabaseClient.from('consultas').update({ estado: 'Pendiente' }).eq('id', id);
+                if (error) throw error;
+                showNotification("Cita restaurada en la agenda activa.");
+                fetchAllData();
+            } catch (err) {
+                console.error("Error al restaurar:", err);
+                showNotification("Fallo al restaurar.");
             }
         }
 
@@ -1734,7 +1418,15 @@
             listEnEspera.innerHTML = '';
             listEnSillon.innerHTML = '';
 
-            const todayStr = new Date().toISOString().split('T')[0];
+            const dateToday = new Date();
+            const dateTomorrow = new Date(dateToday);
+            dateTomorrow.setDate(dateTomorrow.getDate() + 1);
+            const dateDayAfter = new Date(dateToday);
+            dateDayAfter.setDate(dateDayAfter.getDate() + 2);
+
+            const todayStr = getLocalYYYYMMDD(dateToday);
+            const tomorrowStr = getLocalYYYYMMDD(dateTomorrow);
+            const dayAfterStr = getLocalYYYYMMDD(dateDayAfter);
 
             let countPorVenir = 0;
             let countEnEspera = 0;
@@ -1742,27 +1434,41 @@
 
             localState.consultas.forEach(c => {
                 const citaDateStr = c.fecha_hora.split('T')[0];
-                if (citaDateStr !== todayStr) return; // Sólo citas de HOY
-
-                // REGLA DE FILTRADO PARA DOCTORES: Si el usuario activo es DOCTOR, solo ve sus propios pacientes asignados
+                
                 if (currentSessionRole === 'DOCTOR' && c.doctor_id !== currentSessionDoctorId) {
                     return; 
                 }
+
+                // ESTRUCTURA DE LA VENTANA DE 48 HORAS (Solo procesa hoy, mañana y pasado mañana)
+                const esHoy = (citaDateStr === todayStr);
+                const esManana = (citaDateStr === tomorrowStr);
+                const esPasado = (citaDateStr === dayAfterStr);
+
+                if (!esHoy && !esManana && !esPasado) return; 
 
                 const pac = c.pacientes ? `${c.pacientes.nombre} ${c.pacientes.apellidos || ''}` : "Paciente";
                 const doc = c.doctores?.nombre || "Odontólogo";
                 const hora = c.fecha_hora.slice(11, 16);
                 const consultorio = c.consultorios?.nombre || "Sillón General";
 
+                let timeBadgeHTML = "";
+                if (esHoy) {
+                    timeBadgeHTML = `<span class="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded border border-blue-200 font-mono">Hoy - ${hora}</span>`;
+                } else if (esManana) {
+                    timeBadgeHTML = `<span class="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 font-mono font-semibold">Mañana - ${hora}</span>`;
+                } else if (esPasado) {
+                    timeBadgeHTML = `<span class="text-[10px] font-bold text-slate-700 bg-slate-50 px-2 py-0.5 rounded border border-slate-200 font-mono">En 2 Días - ${hora}</span>`;
+                }
+
                 const cardHTML = `
-                    <div class="bg-gray-50 p-3 rounded-lg border border-gray-100 shadow-sm space-y-2">
-                        <div class="flex justify-between items-start">
-                            <span class="text-xs font-bold font-mono text-teal-700 bg-teal-50 px-2 py-0.5 rounded">${hora}</span>
-                            <span class="text-[10px] text-gray-500 font-semibold uppercase">${consultorio}</span>
+                    <div class="bg-white p-3 rounded-lg border border-gray-200 shadow-sm space-y-2">
+                        <div class="flex justify-between items-center">
+                            ${timeBadgeHTML}
+                            <span class="text-[9px] text-gray-400 font-bold uppercase">${consultorio}</span>
                         </div>
                         <div>
                             <h4 class="text-sm font-bold text-gray-900">${pac}</h4>
-                            <p class="text-xs text-gray-500"><i class="fa-solid fa-user-doctor mr-1"></i>Dr. ${doc}</p>
+                            <p class="text-xs text-gray-500 font-medium"><i class="fa-solid fa-user-doctor mr-1"></i>Dr. ${doc}</p>
                         </div>
                         <div class="flex justify-end space-x-1 pt-2 border-t border-gray-100">
                             ${c.estado === 'Pendiente' ? `
@@ -1770,14 +1476,14 @@
                                     <i class="fa-solid fa-couch mr-1"></i> Llegó
                                 </button>
                             ` : ''}
-                            ${c.estado === 'En Espera' ? `
+                            ${c.estado === 'En Espera' && esHoy ? `
                                 <button onclick="updateConsultaState('${c.id}', 'En Sillón')" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-2 py-1 rounded font-semibold transition">
                                     <i class="fa-solid fa-chair-office mr-1"></i> ${currentSessionRole === 'DOCTOR' ? 'Llamar a Mi Sillón' : 'Llamar a Sillón'}
                                 </button>
                             ` : ''}
-                            ${c.estado === 'En Sillón' ? `
+                            ${c.estado === 'En Sillón' && esHoy ? `
                                 <button onclick="editConsulta('${c.id}')" class="text-xs bg-teal-800 hover:bg-teal-900 text-white px-2 py-1 rounded font-semibold transition">
-                                    <i class="fa-solid fa-file-invoice-dollar mr-1"></i> ${currentSessionRole === 'DOCTOR' ? 'Cerrar Consulta (Recetar)' : 'Completar & Cobrar'}
+                                    <i class="fa-solid fa-file-invoice-dollar mr-1"></i> ${currentSessionRole === 'DOCTOR' ? 'Cerrar Consulta' : 'Completar & Cobrar'}
                                 </button>
                             ` : ''}
                         </div>
@@ -1787,16 +1493,15 @@
                 if (c.estado === 'Pendiente') {
                     listPorVenir.innerHTML += cardHTML;
                     countPorVenir++;
-                } else if (c.estado === 'En Espera') {
+                } else if (c.estado === 'En Espera' && esHoy) {
                     listEnEspera.innerHTML += cardHTML;
                     countEnEspera++;
-                } else if (c.estado === 'En Sillón') {
+                } else if (c.estado === 'En Sillón' && esHoy) {
                     listEnSillon.innerHTML += cardHTML;
                     countEnSillon++;
                 }
             });
 
-            // Ajuste visual según rol de doctor
             if (currentSessionRole === 'DOCTOR') {
                 colPorVenir.classList.add('hidden'); 
             } else {
@@ -1913,7 +1618,13 @@
 
         function renderConsultas() {
             const tbody = document.getElementById('consultas-tbody');
+            const trashTbody = document.getElementById('consultas-trash-tbody');
+
             tbody.innerHTML = '';
+            trashTbody.innerHTML = '';
+
+            let countTrash = 0;
+
             localState.consultas.forEach(c => {
                 const pacName = c.pacientes ? `${c.pacientes.nombre} ${c.pacientes.apellidos || ''}` : 'N/A';
                 const docName = c.doctores?.nombre || 'N/A';
@@ -1923,6 +1634,27 @@
                 const total = parseFloat(c.costo) || 0;
                 const saldo = total - abono;
 
+                if (c.estado === 'Eliminada') {
+                    // Si la cita fue eliminada lógicamente, se renderiza en la papelera del Administrador
+                    trashTbody.innerHTML += `
+                        <tr class="bg-red-50 bg-opacity-50">
+                            <td class="px-6 py-4 text-sm text-gray-500 font-mono">${c.fecha_hora.replace('T', ' ').slice(0, 16)}</td>
+                            <td class="px-6 py-4 text-sm text-gray-900 font-medium">${pacName}</td>
+                            <td class="px-6 py-4 text-sm text-gray-500">${docName}</td>
+                            <td class="px-6 py-4 text-sm text-gray-500">${servName}</td>
+                            <td class="px-6 py-4 text-sm text-gray-950 font-bold text-right font-mono">$${total.toFixed(2)}</td>
+                            <td class="px-6 py-4 text-sm text-right">
+                                <button onclick="restoreConsulta('${c.id}')" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded font-semibold transition shadow-sm flex items-center inline-block">
+                                    <i class="fa-solid fa-rotate-left mr-1"></i> Restaurar
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                    countTrash++;
+                    return; // No se muestra en la agenda activa
+                }
+
+                // RENDERIZADO DE CITAS ACTIVAS
                 let statusColor = "bg-red-100 text-red-800";
                 if (c.pago === "Pagado") {
                     statusColor = "bg-green-100 text-green-800";
@@ -1942,7 +1674,7 @@
                         <td class="px-6 py-4 text-sm">
                             <span class="px-2 py-1 text-xs rounded-full ${statusColor}">${c.pago}</span>
                         </td>
-                        <td class="px-6 py-4 text-sm text-center font-mono">
+                        <td class="px-6 py-4 text-sm text-center">
                             <div class="flex items-center justify-center space-x-1">
                                 <button onclick="openWhatsAppPreview('${c.id}')" class="bg-green-500 text-white p-1.5 rounded-full hover:bg-green-600 transition" title="Preparar Mensaje / Receta">
                                     <i class="fa-brands fa-whatsapp text-sm"></i>
@@ -1958,11 +1690,15 @@
                         </td>
                         <td class="px-6 py-4 text-sm text-right space-x-2">
                             <button onclick="editConsulta('${c.id}')" class="text-teal-600 hover:text-teal-900" title="Cierre Clínico / Cobro"><i class="fa-solid fa-pen-to-square"></i></button>
-                            <button onclick="deleteConsulta('${c.id}')" class="text-red-600 hover:text-red-900"><i class="fa-solid fa-trash"></i></button>
+                            <button onclick="deleteConsulta('${c.id}')" class="text-red-600 hover:text-red-900" title="Eliminar"><i class="fa-solid fa-trash"></i></button>
                         </td>
                     </tr>
                 `;
             });
+
+            if (countTrash === 0) {
+                trashTbody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-center text-xs text-gray-400">Papelera de auditoría vacía.</td></tr>`;
+            }
         }
 
         function renderContabilidad() {
@@ -2003,7 +1739,7 @@
 
         window.onload = function() {
             if (initConnection()) {
-                // Sincronización en segundo plano configurada cada 15 segundos de forma óptima
+                // Sincronización automática de 15 segundos activa de forma óptima
                 setInterval(() => {
                     if (sessionActive && supabaseClient) {
                         fetchAllData(); 
