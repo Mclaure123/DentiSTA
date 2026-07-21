@@ -1,3 +1,36 @@
+Tiene toda la razón. En el día a día de un consultorio que está operando
+activamente, ver que hay "500 pacientes en total" o "5 doctores registrados" no
+aporta ningún valor al trabajo rápido de la secretaria o del doctor; solo quita
+espacio valioso en la pantalla y genera ruido visual.
+
+La Propuesta de Rediseño Operativo para ODONTOSELL
+
+Para limpiar la pantalla y que el sistema sea 100% operativo, propongo los
+siguientes cambios de diseño:
+
+1.  Eliminar el "Panel General" de la vista diaria: Quitaremos esas tarjetas
+    grandes de la parte superior del inicio para que el Tablero de Sala de
+    Espera y Flujo Diario suba y sea lo primero que se ve al abrir el sistema
+    (como se ve en su captura, la sala de espera ocupará toda la pantalla de
+    forma limpia).
+2.  Reubicar las Estadísticas Generales: Esas métricas de control (Total de
+    pacientes en la historia, Doctores registrados, etc.) se moverán al módulo
+    de Contabilidad / Reportes (exclusivo del Administrador), que es donde
+    realmente se toman decisiones gerenciales con esos números.
+3.  Métricas del Día Compactas (Solo lo que importa hoy): En lugar de las
+    tarjetas gigantes, colocaremos una barra de estado diminuta y elegante
+    arriba de las columnas de la sala de espera que solo muestre el pulso de
+    hoy:
+      - 📅 Citas programadas para hoy: [X] | ✅ Atendidos hoy: [Y] | ⏳ En espera
+        ahora: [Z]
+
+Código Completo Actualizado (index.html)
+
+Este código ya viene con el Panel General eliminado de la vista principal.
+Ahora, al ingresar a ODONTOSELL, la Sala de Espera y el flujo diario ocupan de
+forma limpia toda la pantalla desde el primer segundo. Las estadísticas se han
+reubicado de forma profesional.
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -151,30 +184,34 @@
         </div>
     </header>
 
+    <!-- TOAST NOTIFICADOR -->
+    <div id="toast" class="fixed bottom-5 right-5 bg-gray-950 text-white px-4 py-3 rounded-lg shadow-xl hidden z-50 flex items-center space-x-2 transition-all">
+        <span id="toast-message">Mensaje</span>
+    </div>
+
     <!-- MAIN CONTAINER -->
     <main class="flex-grow max-w-7xl w-full mx-auto p-4 md:p-6 hidden" id="app-main">
 
-        <!-- ================= DASHBOARD (SALA DE ESPERA DIGITAL) ================= -->
-        <section id="view-dashboard" class="view-section space-y-6">
-            <h2 class="text-2xl font-bold text-gray-800" id="dashboard-title">Panel General</h2>
+        <!-- ================= DASHBOARD (SALA DE ESPERA DIGITAL DIRECTA - SIN PANEL GENERAL MOLESTO) ================= -->
+        <section id="view-dashboard" class="view-section space-y-4">
             
-            <!-- Tarjetas de métricas rápidas -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" id="dashboard-metrics-grid">
-                <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-blue-500">
-                    <div class="text-gray-500 text-sm font-semibold uppercase">Total Pacientes</div>
-                    <div class="text-3xl font-bold text-gray-800 text-right" id="metric-pacientes">0</div>
+            <!-- BARRA DE MÉTRICAS DEL DÍA COMPACTA (SÓLO LO IMPORTANTE HOY) -->
+            <div class="bg-white px-6 py-3 rounded-lg shadow-sm border border-gray-200 flex flex-wrap justify-between items-center gap-4">
+                <div class="flex items-center space-x-2">
+                    <span class="w-3 h-3 bg-blue-500 rounded-full"></span>
+                    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Citas de Hoy: <span id="metric-pendientes" class="font-bold text-gray-800">0</span></span>
                 </div>
-                <div id="dashboard-metric-caja" class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-green-500 hidden">
-                    <div class="text-gray-500 text-sm font-semibold uppercase">Caja (Ingresos Reales)</div>
-                    <div class="text-3xl font-bold text-teal-600 text-right font-mono" id="metric-ingresos">$0.00</div>
+                <div class="flex items-center space-x-2">
+                    <span class="w-3 h-3 bg-yellow-500 rounded-full"></span>
+                    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">En Espera: <span id="metric-espera-today" class="font-bold text-gray-800">0</span></span>
                 </div>
-                <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-yellow-500">
-                    <div class="text-gray-500 text-sm font-semibold uppercase">Citas Pendientes</div>
-                    <div class="text-3xl font-bold text-gray-800 text-right" id="metric-pendientes">0</div>
+                <div class="flex items-center space-x-2">
+                    <span class="w-3 h-3 bg-emerald-500 rounded-full"></span>
+                    <span class="text-xs font-semibold text-gray-500 uppercase tracking-wider">Atendidos Hoy: <span id="metric-atendidos-today" class="font-bold text-gray-800">0</span></span>
                 </div>
-                <div class="bg-white p-6 rounded-lg shadow-sm border-l-4 border-teal-500">
-                    <div class="text-gray-500 text-sm font-semibold uppercase">Doctores Activos</div>
-                    <div class="text-3xl font-bold text-gray-800 text-right" id="metric-doctores">0</div>
+                <!-- Caja chica oculta para enfermeras -->
+                <div id="dashboard-metric-caja" class="hidden flex items-center space-x-2 border-l border-gray-200 pl-4">
+                    <span class="text-xs font-bold text-gray-500 uppercase tracking-wider">Ingreso Caja Hoy: <span id="metric-ingresos" class="font-bold text-teal-600 font-mono">$0.00</span></span>
                 </div>
             </div>
 
@@ -229,7 +266,7 @@
                         <tr>
                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase font-mono">Cédula Identidad</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nombre Completo</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase font-mono font-mono font-mono">Teléfono Móvil</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase font-mono">Teléfono Móvil</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Familiar Responsable</th>
                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase font-mono">F. Nacimiento</th>
                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase font-mono">Acciones</th>
@@ -330,9 +367,9 @@
                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase font-mono">Costo Total</th>
                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase font-mono text-green-700 font-bold">Abonado (Acumulado)</th>
                             <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase font-mono text-red-700 font-bold">Saldo Deuda</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Estatus Pago</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase font-mono">Estatus Pago</th>
                             <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase font-mono">Herramientas</th>
-                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase font-mono">Acciones</th>
+                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase font-mono font-mono">Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="consultas-tbody" class="divide-y divide-gray-200"></tbody>
@@ -394,6 +431,21 @@
                     <i class="fa-solid fa-plus mr-2"></i>Registrar Transacción
                 </button>
             </div>
+            <!-- SECCIÓN EXCLUSIVA GERENCIAL DE NEGOCIO (REUBICADA AQUÍ) -->
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 space-y-4">
+                <h3 class="text-sm font-bold uppercase tracking-wider text-teal-800"><i class="fa-solid fa-chart-line mr-2"></i>Métricas del Negocio</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                        <div class="text-gray-500 text-xs font-semibold uppercase">Total Histórico de Pacientes</div>
+                        <div class="text-2xl font-bold text-gray-800 text-right" id="metric-pacientes-admin">0</div>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                        <div class="text-gray-500 text-xs font-semibold uppercase">Doctores en el Sistema</div>
+                        <div class="text-2xl font-bold text-gray-800 text-right" id="metric-doctores-admin">0</div>
+                    </div>
+                </div>
+            </div>
+
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="bg-white p-6 rounded-lg shadow-sm border-t-4 border-green-500">
                     <div class="text-gray-500 text-sm font-semibold uppercase">Total Ingresos</div>
@@ -414,12 +466,12 @@
                     <table class="min-w-full divide-y divide-gray-200">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase font-mono font-mono font-mono font-medium">Fecha</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase font-medium font-semibold">Concepto</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase font-mono font-mono font-mono font-medium font-semibold">Tipo</th>
-                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase font-mono font-mono font-mono font-semibold font-medium">Método</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase font-mono font-mono font-mono font-mono font-mono font-medium">Monto ($)</th>
-                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase font-mono font-medium font-semibold">Acción</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase font-mono font-mono font-mono">Fecha</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase font-medium">Concepto</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase font-mono font-mono font-mono font-mono">Tipo</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase font-mono font-mono font-mono font-mono">Método</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase font-mono font-mono font-mono font-mono font-mono">Monto ($)</th>
+                                <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase font-mono">Acción</th>
                             </tr>
                         </thead>
                         <tbody id="contabilidad-tbody" class="divide-y divide-gray-200"></tbody>
@@ -429,6 +481,368 @@
         </section>
 
     </main>
+
+    <!-- MODAL VISTA PREVIA WHATSAPP / RECETA -->
+    <div id="modal-whatsapp-preview" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-lg">
+            <div class="flex items-center space-x-3 text-green-600 mb-4">
+                <i class="fa-brands fa-whatsapp text-3xl"></i>
+                <h3 class="text-xl font-bold text-gray-800">Preparar Indicaciones y Receta</h3>
+            </div>
+            <p class="text-sm text-gray-600 mb-4">Puede refinar el texto de la receta e indicaciones clínicas antes de enviarlo por WhatsApp:</p>
+            <input type="hidden" id="wpp-consulta-id">
+            <input type="hidden" id="wpp-telefono">
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-gray-500">Paciente</label>
+                    <div class="text-sm font-medium text-gray-800 mt-1" id="wpp-destinatario">Paciente</div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase text-gray-500">Receta Médica & Mensaje</label>
+                    <textarea id="wpp-mensaje-texto" rows="6" class="mt-1 block w-full border border-gray-300 rounded-md p-3 text-sm focus:ring-teal-500 focus:border-teal-500"></textarea>
+                </div>
+            </div>
+            <div class="flex justify-end space-x-3 mt-6">
+                <button type="button" onclick="closeModal('modal-whatsapp-preview')" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400 font-semibold text-sm">Cancelar</button>
+                <button type="button" onclick="executeWhatsAppSend()" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded flex items-center font-semibold text-sm">
+                    <i class="fa-brands fa-whatsapp mr-2 text-base"></i> Abrir WhatsApp e Iniciar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PACIENTE -->
+    <div id="modal-paciente" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
+            <h3 class="text-xl font-bold text-gray-800 mb-4" id="paciente-modal-title">Agregar Paciente</h3>
+            <form id="form-paciente" onsubmit="savePaciente(event)">
+                <input type="hidden" id="paciente-id">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Cédula de Identidad (Sólo Números)</label>
+                        <input type="text" id="paciente-cedula" required inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')" class="mt-1 block w-full border border-gray-300 rounded-md p-2">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Nombres</label>
+                            <input type="text" id="paciente-nombre" required class="mt-1 block w-full border border-gray-300 rounded-md p-2">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Apellidos</label>
+                            <input type="text" id="paciente-apellidos" required class="mt-1 block w-full border border-gray-300 rounded-md p-2">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Móvil Celular (Código de país sin '+')</label>
+                        <input type="text" id="paciente-telefono" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 text-right font-mono" placeholder="Ej: 5215555555555">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Email (Opcional - puede quedar vacío)</label>
+                        <input type="email" id="paciente-email" class="mt-1 block w-full border border-gray-300 rounded-md p-2" placeholder="paciente@ejemplo.com">
+                    </div>
+                    
+                    <div class="bg-teal-50 p-3 rounded-md border border-teal-200 space-y-3">
+                        <div class="flex items-center">
+                            <input type="checkbox" id="paciente-es-menor" onchange="toggleTutorFields()" class="h-4 w-4 text-teal-600 focus:ring-teal-500 border-gray-300 rounded">
+                            <label for="paciente-es-menor" class="ml-2 block text-xs font-bold text-teal-800 uppercase tracking-wider">¿Es menor de edad / dependiente?</label>
+                        </div>
+                        <div id="tutor-fields" class="hidden space-y-2">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700">Seleccionar Tutor / Adulto Responsable</label>
+                                <select id="paciente-tutor-id" class="mt-1 block w-full border border-gray-300 rounded-md p-1.5 text-xs bg-white"></select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-700">Parentesco / Relación Familiar</label>
+                                <input type="text" id="paciente-parentesco" placeholder="Ej: Madre, Padre, Abuelo..." class="mt-1 block w-full border border-gray-300 rounded-md p-1.5 text-xs">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Fecha de Nacimiento</label>
+                        <input type="date" id="paciente-fechaNac" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 text-right">
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" onclick="closeModal('modal-paciente')" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400 font-semibold text-sm">Cancelar</button>
+                    <button type="submit" class="theme-bg text-white px-4 py-2 rounded theme-hover transition font-semibold text-sm font-mono">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL DOCTOR -->
+    <div id="modal-doctor" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
+            <h3 class="text-xl font-bold text-gray-800 mb-4" id="doctor-modal-title">Agregar Doctor</h3>
+            <form id="form-doctor" onsubmit="saveDoctor(event)">
+                <input type="hidden" id="doctor-id">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Nombre Completo</label>
+                        <input type="text" id="doctor-nombre" required class="mt-1 block w-full border border-gray-300 rounded-md p-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Especialidad</label>
+                        <input type="text" id="doctor-especialidad" required class="mt-1 block w-full border border-gray-300 rounded-md p-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Teléfono Móvil</label>
+                        <input type="text" id="doctor-telefono" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 text-right font-mono" placeholder="Ej. 5215555555555">
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" onclick="closeModal('modal-doctor')" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400 font-semibold text-sm">Cancelar</button>
+                    <button type="submit" class="theme-bg text-white px-4 py-2 rounded theme-hover transition font-semibold text-sm">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL USUARIO / PERSONAL -->
+    <div id="modal-usuario" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
+            <h3 class="text-xl font-bold text-gray-800 mb-4" id="usuario-modal-title">Crear Cuenta de Personal</h3>
+            <form id="form-usuario" onsubmit="saveUsuario(event)">
+                <input type="hidden" id="usuario-id">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Cédula de Identidad (Sólo Números)</label>
+                        <input type="text" id="usuario-cedula" required inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')" class="mt-1 block w-full border border-gray-300 rounded-md p-2">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Nombres</label>
+                            <input type="text" id="usuario-nombre" required class="mt-1 block w-full border border-gray-300 rounded-md p-2">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Apellidos</label>
+                            <input type="text" id="usuario-apellidos" required class="mt-1 block w-full border border-gray-300 rounded-md p-2">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Nivel de Acceso / Rol</label>
+                        <select id="usuario-rol" required onchange="toggleDoctorLinkField()" class="mt-1 block w-full border border-gray-300 rounded-md p-2 bg-gray-50">
+                            <option value="SECRETARIA">SECRETARIA</option>
+                            <option value="DOCTOR">DOCTOR</option>
+                            <option value="ADMINISTRADOR">ADMINISTRADOR</option>
+                        </select>
+                    </div>
+                    
+                    <div id="user-doctor-link-field" class="hidden bg-gray-50 p-3 rounded border border-gray-200">
+                        <label class="block text-xs font-bold text-gray-700 uppercase">Vincular con Ficha de Doctor</label>
+                        <select id="usuario-doctor-id" class="mt-1 block w-full border border-gray-300 rounded-md p-2 bg-white text-sm"></select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Nombre de Usuario</label>
+                            <input type="text" id="usuario-username" required class="mt-1 block w-full border border-gray-300 rounded-md p-2">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Contraseña</label>
+                            <div class="relative">
+                                <input type="password" id="usuario-password" required class="block w-full border border-gray-300 rounded-md p-2 pr-10">
+                                <button type="button" onclick="togglePasswordVisibility('usuario-password', 'eye-user-create')" class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-teal-600">
+                                    <i id="eye-user-create" class="fa-solid fa-eye-slash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Teléfono Móvil</label>
+                        <input type="text" id="usuario-telefono" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 text-right font-mono">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Email (Opcional)</label>
+                        <input type="email" id="usuario-email" class="mt-1 block w-full border border-gray-300 rounded-md p-2">
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" onclick="closeModal('modal-usuario')" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400 font-semibold text-sm">Cancelar</button>
+                    <button type="submit" class="theme-bg text-white px-4 py-2 rounded theme-hover transition font-semibold">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL CONSULTORIO -->
+    <div id="modal-consultorio" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-sm">
+            <h3 class="text-xl font-bold text-gray-800 mb-4" id="consultorio-modal-title">Agregar Consultorio / Sillón</h3>
+            <form id="form-consultorio" onsubmit="saveConsultorio(event)">
+                <input type="hidden" id="consultorio-id">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Nombre / Identificador del Sillón</label>
+                        <input type="text" id="consultorio-nombre" required placeholder="Ej: Sillón Azul, Box Dental 2" class="mt-1 block w-full border border-gray-300 rounded-md p-2 text-sm">
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" onclick="closeModal('modal-consultorio')" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400 font-semibold text-sm">Cancelar</button>
+                    <button type="submit" class="theme-bg text-white px-4 py-2 rounded theme-hover transition font-semibold">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL SERVICIO -->
+    <div id="modal-servicio" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
+            <h3 class="text-xl font-bold text-gray-800 mb-4" id="servicio-modal-title">Agregar Servicio</h3>
+            <form id="form-servicio" onsubmit="saveServicio(event)">
+                <input type="hidden" id="servicio-id">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Nombre del Tratamiento</label>
+                        <input type="text" id="servicio-nombre" required class="mt-1 block w-full border border-gray-300 rounded-md p-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Precio Base ($)</label>
+                        <input type="number" step="0.01" min="0" id="servicio-costo" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 text-right font-mono">
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" onclick="closeModal('modal-servicio')" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400 font-semibold text-sm">Cancelar</button>
+                    <button type="submit" class="theme-bg text-white px-4 py-2 rounded theme-hover transition font-semibold select-none font-mono">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL CONSULTA (PAGOS CRONOLÓGICOS INTERACTIVOS) -->
+    <div id="modal-consulta" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-lg">
+            <h3 class="text-xl font-bold text-gray-800 mb-4" id="consulta-modal-title">Programar Cita</h3>
+            <form id="form-consulta" onsubmit="saveConsulta(event)">
+                <input type="hidden" id="consulta-id">
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Paciente</label>
+                            <select id="consulta-paciente" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 bg-gray-50 text-sm font-medium"></select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Doctor</label>
+                            <select id="consulta-doctor" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 bg-gray-50 text-sm font-medium"></select>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Servicio Programado</label>
+                            <select id="consulta-servicio" required onchange="applyBasePrice()" class="mt-1 block w-full border border-gray-300 rounded-md p-2 bg-gray-50 text-sm font-medium"></select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Sillón / Consultorio</label>
+                            <select id="consulta-consultorio-id" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 bg-gray-50 text-sm font-medium"></select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Fecha y Hora</label>
+                            <input type="datetime-local" id="consulta-fecha" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 text-right text-sm">
+                        </div>
+                    </div>
+
+                    <!-- SECCIÓN CLÍNICA -->
+                    <div class="border-t border-gray-200 pt-3 space-y-3">
+                        <span class="text-xs font-bold uppercase tracking-wider text-teal-600 block">Fase Clínica (Tratamiento, Receta y Cobros)</span>
+                        <div class="grid grid-cols-4 gap-2">
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700">Estatus Clínico</label>
+                                <select id="consulta-estado" class="mt-1 block w-full border border-gray-300 rounded-md p-1.5 bg-gray-50 text-xs font-medium">
+                                    <option value="Pendiente">Pendiente</option>
+                                    <option value="En Espera">En Espera</option>
+                                    <option value="En Sillón">En Sillón</option>
+                                    <option value="Completada">Completada</option>
+                                    <option value="Cancelada">Cancelada</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700">Costo Final ($)</label>
+                                <input type="number" step="0.01" min="0" id="consulta-costo" required class="mt-1 block w-full border border-gray-300 rounded-md p-1.5 text-right font-mono text-xs">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700">Registrar Abono ($)</label>
+                                <input type="number" step="0.01" min="0" id="consulta-monto-pagado" required class="mt-1 block w-full border border-gray-300 rounded-md p-1.5 text-right font-mono text-xs" placeholder="0.00">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-700">Método de Pago</label>
+                                <select id="consulta-metodo-pago" class="mt-1 block w-full border border-gray-300 rounded-md p-1.5 bg-gray-50 text-xs font-medium">
+                                    <option value="Efectivo">Efectivo</option>
+                                    <option value="Tarjeta">Tarjeta</option>
+                                    <option value="QR">QR</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- PANEL HISTÓRICO DE ABONOS -->
+                        <div class="bg-gray-50 p-3 rounded border border-gray-200 space-y-2">
+                            <span class="text-[10px] font-bold uppercase tracking-wider text-gray-500 block">Historial de Pagos de esta cita</span>
+                            <ul id="consulta-historial-pagos-list" class="text-xs text-gray-600 space-y-1 font-mono">
+                                <!-- JS inyectará el desglose cronológico de abonos -->
+                            </ul>
+                            <div class="text-[11px] font-semibold text-gray-700 border-t border-gray-200 pt-2 flex justify-between">
+                                <span>Total Abonado: <span id="consulta-total-abonado-lbl" class="font-bold font-mono text-green-700">$0.00</span></span>
+                                <span>Saldo Restante: <span id="consulta-saldo-deuda-lbl" class="font-bold font-mono text-red-600">$0.00</span></span>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Receta Médica / Medicación / Indicaciones</label>
+                            <textarea id="consulta-receta" rows="3" placeholder="Ingresar medicamentos e indicaciones de cuidado..." class="mt-1 block w-full border border-gray-300 rounded-md p-2 text-sm" style="resize: none;"></textarea>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" onclick="closeModal('modal-consulta')" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400 font-semibold text-sm">Cancelar</button>
+                    <button type="submit" class="theme-bg text-white px-4 py-2 rounded theme-hover transition font-semibold text-sm font-mono">Guardar Cita</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL TRANSACCION -->
+    <div id="modal-transaccion" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
+            <h3 class="text-xl font-bold text-gray-800 mb-4">Registrar Movimiento</h3>
+            <form id="form-transaccion" onsubmit="saveTransaccion(event)">
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Concepto / Descripción</label>
+                        <input type="text" id="transaccion-concepto" required class="mt-1 block w-full border border-gray-300 rounded-md p-2">
+                    </div>
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Tipo de Movimiento</label>
+                            <select id="transaccion-tipo" class="mt-1 block w-full border border-gray-300 rounded-md p-2 bg-gray-50">
+                                <option value="Egreso">Egreso (Gasto)</option>
+                                <option value="Ingreso">Ingreso</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Método de Operación</label>
+                            <select id="transaccion-metodo-pago" class="mt-1 block w-full border border-gray-300 rounded-md p-2 bg-gray-50">
+                                <option value="Efectivo">Efectivo</option>
+                                <option value="Tarjeta">Tarjeta</option>
+                                <option value="QR">QR</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Monto ($)</label>
+                        <input type="number" step="0.01" min="0.01" id="transaccion-monto" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 text-right font-mono">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Fecha de Registro</label>
+                        <input type="date" id="transaccion-fecha" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 text-right font-mono">
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button type="button" onclick="closeModal('modal-transaccion')" class="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400 font-semibold text-sm">Cancelar</button>
+                    <button type="submit" class="theme-bg text-white px-4 py-2 rounded theme-hover transition font-semibold text-sm">Registrar</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <!-- ================= CONTROLADOR JS / INTEGRACIÓN ================= -->
     <script>
@@ -837,7 +1251,7 @@
             }
         }
 
-        // ================= CONECTORES DE CONTROLES INDIVIDUALES =================
+        // ================= DOCTORES CONTROLLER =================
         async function saveDoctor(e) {
             e.preventDefault();
             if (!supabaseClient) return;
@@ -869,6 +1283,33 @@
             }
         }
 
+        function editDoctor(id) {
+            const d = localState.doctores.find(x => x.id === id);
+            if (!d) return;
+            document.getElementById('doctor-id').value = d.id;
+            document.getElementById('doctor-nombre').value = d.nombre;
+            document.getElementById('doctor-especialidad').value = d.especialidad;
+            document.getElementById('doctor-telefono').value = d.telefono;
+            document.getElementById('doctor-modal-title').innerText = "Editar Doctor";
+            openModal('modal-doctor');
+        }
+
+        async function deleteDoctor(id) {
+            if (!supabaseClient) return;
+            if (confirm("¿Seguro que desea eliminar este doctor?")) {
+                try {
+                    const { error } = await supabaseClient.from('doctores').delete().eq('id', id);
+                    if (error) throw error;
+                    showNotification("Doctor eliminado.");
+                    fetchAllData();
+                } catch (err) {
+                    console.error("Error:", err);
+                    showNotification("No se pudo borrar el registro.");
+                }
+            }
+        }
+
+        // ================= USUARIOS CONTROLLER (PERSONAL) =================
         async function saveUsuario(e) {
             e.preventDefault();
             if (!supabaseClient) return;
@@ -932,6 +1373,96 @@
             }
         }
 
+        function editUsuario(id) {
+            const u = localState.usuarios.find(x => x.id === id);
+            if (!u) return;
+            document.getElementById('usuario-id').value = u.id;
+            document.getElementById('usuario-cedula').value = u.cedula;
+            document.getElementById('usuario-nombre').value = u.nombre;
+            document.getElementById('usuario-apellidos').value = u.apellidos;
+            document.getElementById('usuario-rol').value = u.rol;
+            toggleDoctorLinkField();
+            if (u.rol === 'DOCTOR') {
+                document.getElementById('usuario-doctor-id').value = u.doctor_id || '';
+            }
+            document.getElementById('usuario-username').value = u.usuario;
+            document.getElementById('usuario-password').value = u.contrasena;
+            document.getElementById('usuario-telefono').value = u.telefono;
+            document.getElementById('usuario-email').value = u.email || '';
+            document.getElementById('usuario-modal-title').innerText = "Editar Cuenta de Acceso";
+            openModal('modal-usuario');
+        }
+
+        async function deleteUsuario(id) {
+            if (!supabaseClient) return;
+            if (confirm("¿Seguro que desea eliminar esta cuenta? El usuario perderá acceso inmediato.")) {
+                try {
+                    const { error } = await supabaseClient.from('usuarios').delete().eq('id', id);
+                    if (error) throw error;
+                    showNotification("Cuenta de usuario eliminada.");
+                    fetchAllData();
+                } catch (err) {
+                    console.error("Error:", err);
+                    showNotification("Error de procesamiento.");
+                }
+            }
+        }
+
+        // ================= CONSULTORIOS CONTROLLER =================
+        async function saveConsultorio(e) {
+            e.preventDefault();
+            if (!supabaseClient) return;
+            try {
+                const id = document.getElementById('consultorio-id').value;
+                const data = {
+                    nombre: document.getElementById('consultorio-nombre').value.trim()
+                };
+
+                let error;
+                if (id) {
+                    const res = await supabaseClient.from('consultorios').update(data).eq('id', id);
+                    error = res.error;
+                } else {
+                    const res = await supabaseClient.from('consultorios').insert([data]);
+                    error = res.error;
+                }
+                
+                if (error) throw error;
+
+                closeModal('modal-consultorio');
+                showNotification("Sillón/Consultorio guardado.");
+                fetchAllData();
+            } catch (err) {
+                console.error("Error al guardar consultorio:", err);
+                showNotification("Fallo al guardar consultorio. Nombre duplicado u otro error.");
+            }
+        }
+
+        function editConsultorio(id) {
+            const c = localState.consultorios.find(x => x.id === id);
+            if (!c) return;
+            document.getElementById('consultorio-id').value = c.id;
+            document.getElementById('consultorio-nombre').value = c.nombre;
+            document.getElementById('consultorio-modal-title').innerText = "Editar Identificación Sillón";
+            openModal('modal-consultorio');
+        }
+
+        async function deleteConsultorio(id) {
+            if (!supabaseClient) return;
+            if (confirm("¿Desea eliminar este consultorio/sillón?")) {
+                try {
+                    const { error } = await supabaseClient.from('consultorios').delete().eq('id', id);
+                    if (error) throw error;
+                    showNotification("Consultorio/Sillón removido.");
+                    fetchAllData();
+                } catch (err) {
+                    console.error("Error:", err);
+                    showNotification("No se puede borrar (puede tener citas asignadas).");
+                }
+            }
+        }
+
+        // ================= SERVICIOS CONTROLLER =================
         async function saveServicio(e) {
             e.preventDefault();
             if (!supabaseClient) return;
@@ -961,6 +1492,32 @@
             }
         }
 
+        function editServicio(id) {
+            const s = localState.servicios.find(x => x.id === id);
+            if (!s) return;
+            document.getElementById('servicio-id').value = s.id;
+            document.getElementById('servicio-nombre').value = s.nombre;
+            document.getElementById('servicio-costo').value = s.costo;
+            document.getElementById('servicio-modal-title').innerText = "Editar Servicio";
+            openModal('modal-servicio');
+        }
+
+        async function deleteServicio(id) {
+            if (!supabaseClient) return;
+            if (confirm("¿Desea eliminar este tratamiento del catálogo?")) {
+                try {
+                    const { error } = await supabaseClient.from('servicios').delete().eq('id', id);
+                    if (error) throw error;
+                    showNotification("Servicio eliminado.");
+                    fetchAllData();
+                } catch (err) {
+                    console.error("Error:", err);
+                    showNotification("Error al eliminar el tratamiento.");
+                }
+            }
+        }
+
+        // ================= PACIENTES CONTROLLER =================
         async function savePaciente(e) {
             e.preventDefault();
             if (!supabaseClient) return;
@@ -1017,6 +1574,44 @@
             } catch (err) {
                 console.error("Error al guardar paciente:", err);
                 showNotification(`Fallo: ${err.message || 'Error de procesamiento. Examine la consola.'}`);
+            }
+        }
+
+        function editPaciente(id) {
+            const p = localState.pacientes.find(x => x.id === id);
+            if (!p) return;
+            document.getElementById('paciente-id').value = p.id;
+            document.getElementById('paciente-cedula').value = p.cedula || '';
+            document.getElementById('paciente-nombre').value = p.nombre || '';
+            document.getElementById('paciente-apellidos').value = p.apellidos || '';
+            document.getElementById('paciente-telefono').value = p.telefono || '';
+            document.getElementById('paciente-email').value = p.email || '';
+            document.getElementById('paciente-fechaNac').value = p.fecha_nacimiento || '';
+
+            const esMenor = p.tutor_id !== null;
+            document.getElementById('paciente-es-menor').checked = esMenor;
+            toggleTutorFields();
+            if (esMenor) {
+                document.getElementById('paciente-tutor-id').value = p.tutor_id;
+                document.getElementById('paciente-parentesco').value = p.parentesco || '';
+            }
+
+            document.getElementById('paciente-modal-title').innerText = "Editar Paciente";
+            openModal('modal-paciente');
+        }
+
+        async function deletePaciente(id) {
+            if (!supabaseClient) return;
+            if (confirm("¿Eliminar este paciente del sistema?")) {
+                try {
+                    const { error } = await supabaseClient.from('pacientes').delete().eq('id', id);
+                    if (error) throw error;
+                    showNotification("Paciente eliminado.");
+                    fetchAllData();
+                } catch (err) {
+                    console.error("Error:", err);
+                    showNotification("No se puede borrar el paciente (puede tener citas activas).");
+                }
             }
         }
 
@@ -1397,12 +1992,26 @@
         }
 
         function renderDashboard() {
-            document.getElementById('metric-pacientes').innerText = localState.pacientes.length;
-            document.getElementById('metric-doctores').innerText = localState.doctores.length;
-            document.getElementById('metric-pendientes').innerText = localState.consultas.filter(c => c.estado === 'Pendiente').length;
+            // Sincronizar contadores de cabecera rápidos
+            const totalPacientes = localState.pacientes.length;
+            const totalDoctores = localState.doctores.length;
+            const citasPendientesHoy = localState.consultas.filter(c => c.estado === 'Pendiente').length;
 
-            const totalIn = localState.transacciones.filter(t => t.tipo === 'Ingreso').reduce((a, b) => a + parseFloat(b.monto), 0);
-            document.getElementById('metric-ingresos').innerText = `$${totalIn.toFixed(2)}`;
+            document.getElementById('metric-pacientes').innerText = totalPacientes;
+            document.getElementById('metric-pendientes').innerText = citasPendientesHoy;
+            document.getElementById('metric-doctores').innerText = totalDoctores;
+
+            // Almacenar en contabilidad de administrador las métricas del negocio reubicadas
+            document.getElementById('metric-pacientes-admin').innerText = totalPacientes;
+            document.getElementById('metric-doctores-admin').innerText = totalDoctores;
+
+            // Calcular ingresos de hoy
+            const todayStr = getLocalYYYYMMDD(new Date());
+            const ingresosHoy = localState.transacciones
+                .filter(t => t.tipo === 'Ingreso' && t.fecha === todayStr)
+                .reduce((acc, curr) => acc + parseFloat(curr.monto), 0);
+
+            document.getElementById('metric-ingresos').innerText = `$${ingresosHoy.toFixed(2)}`;
         }
 
         function renderQueueBoard() {
@@ -1502,6 +2111,7 @@
                 }
             });
 
+            // Ajuste de visualización
             if (currentSessionRole === 'DOCTOR') {
                 colPorVenir.classList.add('hidden'); 
             } else {
@@ -1511,6 +2121,13 @@
             document.getElementById('count-por-venir').innerText = countPorVenir;
             document.getElementById('count-en-espera').innerText = countEnEspera;
             document.getElementById('count-en-sillon').innerText = countEnSillon;
+
+            // Sincronizar contadores de cabecera diario
+            document.getElementById('metric-espera-today').innerText = countEnEspera;
+            
+            // Atendidos de hoy en panel superior
+            const atendidosHoyCount = localState.consultas.filter(c => c.estado === 'Completada' && c.fecha_hora.split('T')[0] === todayStr).length;
+            document.getElementById('metric-atendidos-today').innerText = atendidosHoyCount;
 
             if (countPorVenir === 0) listPorVenir.innerHTML = `<div class="text-center py-12 text-xs text-gray-400">Sin citas agendadas por venir.</div>`;
             if (countEnEspera === 0) listEnEspera.innerHTML = `<div class="text-center py-12 text-xs text-gray-400">Sala de espera vacía.</div>`;
@@ -1635,26 +2252,26 @@
                 const saldo = total - abono;
 
                 if (c.estado === 'Eliminada') {
-                    // Si la cita fue eliminada lógicamente, se renderiza en la papelera del Administrador
+                    // Papelera histórica
                     trashTbody.innerHTML += `
                         <tr class="bg-red-50 bg-opacity-50">
                             <td class="px-6 py-4 text-sm text-gray-500 font-mono">${c.fecha_hora.replace('T', ' ').slice(0, 16)}</td>
                             <td class="px-6 py-4 text-sm text-gray-900 font-medium">${pacName}</td>
                             <td class="px-6 py-4 text-sm text-gray-500">${docName}</td>
                             <td class="px-6 py-4 text-sm text-gray-500">${servName}</td>
-                            <td class="px-6 py-4 text-sm text-gray-950 font-bold text-right font-mono">$${total.toFixed(2)}</td>
+                            <td class="px-6 py-4 text-sm text-gray-955 font-bold text-right font-mono">$${total.toFixed(2)}</td>
                             <td class="px-6 py-4 text-sm text-right">
-                                <button onclick="restoreConsulta('${c.id}')" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded font-semibold transition shadow-sm flex items-center inline-block">
+                                <button onclick="restoreConsulta('${c.id}')" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded font-semibold transition shadow-sm inline-block">
                                     <i class="fa-solid fa-rotate-left mr-1"></i> Restaurar
                                 </button>
                             </td>
                         </tr>
                     `;
                     countTrash++;
-                    return; // No se muestra en la agenda activa
+                    return; 
                 }
 
-                // RENDERIZADO DE CITAS ACTIVAS
+                // CITAS ACTIVAS
                 let statusColor = "bg-red-100 text-red-800";
                 if (c.pago === "Pagado") {
                     statusColor = "bg-green-100 text-green-800";
@@ -1739,7 +2356,7 @@
 
         window.onload = function() {
             if (initConnection()) {
-                // Sincronización automática de 15 segundos activa de forma óptima
+                // Sincronización automática de 15 segundos activa
                 setInterval(() => {
                     if (sessionActive && supabaseClient) {
                         fetchAllData(); 
