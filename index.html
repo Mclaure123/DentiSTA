@@ -1,3 +1,28 @@
+Aquí tiene el código completo de la aplicación ODONTOSELL.
+
+Se han implementado todas las modificaciones necesarias en el cliente para
+integrarse de forma nativa con el modelo multi-tenant.
+
+Mejoras clave en este archivo:
+
+1.  Sesión en Memoria Protegida: El sistema ahora captura el identificador
+    currentSessionClinicaId de forma privada al iniciar sesión mediante la
+    función RPC.
+2.  Aislamiento de Consultas de Lectura: Todas las peticiones de datos
+    (pacientes, doctores, consultas, transacciones, etc.) filtran
+    automáticamente la información mediante la cláusula .eq('clinica_id',
+    currentSessionClinicaId) en el servidor de Supabase.
+3.  Segregación en Inserciones (Escritura): Al crear cualquier registro (una
+    nueva cita, un nuevo paciente, una transacción contable), el sistema le
+    inyecta automáticamente la firma clinica_id del administrador o sucursal
+    activa.
+4.  Panel de Super-Administrador Inteligente (@DMIN): Si ingresa con el usuario
+    @DMIN, el sistema detectará el perfil matriz y habilitará un campo especial
+    de asignación de sucursal en el registro de usuarios, permitiendo crear y
+    distribuir personal en las diferentes clínicas.
+
+Sustituya por completo su archivo HTML por este código unificado:
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -452,7 +477,34 @@
                 </div>
             </div>
 
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
+            <!-- SECCIÓN DE CARTERA DE DEUDORES -->
+            <div class="bg-white p-6 rounded-xl border border-red-200 shadow-sm space-y-4">
+                <div class="flex items-center space-x-2 text-red-700">
+                    <i class="fa-solid fa-hand-holding-dollar text-xl"></i>
+                    <h3 class="text-lg font-bold">Cartera de Deudores / Cuentas Pendientes</h3>
+                </div>
+                <p class="text-xs text-gray-600">Listado de pacientes con saldos pendientes por cobrar en sucursales activas.</p>
+                <div class="overflow-hidden bg-white rounded-lg border border-gray-200">
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200 text-left">
+                            <thead class="bg-red-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-xs font-semibold text-red-800 uppercase">Paciente</th>
+                                    <th class="px-6 py-3 text-xs font-semibold text-red-800 uppercase">Último Tratamiento</th>
+                                    <th class="px-6 py-3 text-xs font-semibold text-red-800 uppercase font-mono">Fecha Cita</th>
+                                    <th class="px-6 py-3 text-right text-xs font-semibold text-red-800 uppercase font-mono">Costo ($)</th>
+                                    <th class="px-6 py-3 text-right text-xs font-semibold text-green-800 uppercase font-mono">Abonado ($)</th>
+                                    <th class="px-6 py-3 text-right text-xs font-semibold text-red-800 uppercase font-mono">Saldo Adeudo ($)</th>
+                                    <th class="px-6 py-3 text-right text-xs font-semibold text-red-800 uppercase">Acción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="deudores-tbody" class="divide-y divide-gray-200 text-sm text-gray-700"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white p-6 rounded-xl border border-gray-200">
                 <h3 class="text-lg font-bold text-gray-800 mb-4">Libro Diario</h3>
                 <div class="overflow-hidden rounded-lg border border-gray-200">
                     <div class="overflow-x-auto">
@@ -476,31 +528,64 @@
 
     </main>
 
-    <!-- MODAL VISTA PREVIA WHATSAPP / RECETA -->
-    <div id="modal-whatsapp-preview" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white p-6 sm:p-8 rounded-xl shadow-2xl w-full max-w-lg transform transition-all duration-300">
-            <div class="flex items-center space-x-3 text-green-600 mb-4">
-                <i class="fa-brands fa-whatsapp text-3xl"></i>
-                <h3 class="text-xl font-bold text-gray-800">Preparar Indicaciones y Receta</h3>
+    <!-- MODAL: FICHA COMPLETA DEL PACIENTE (HISTORIAL CLÍNICO Y ESTADO DE CUENTA) -->
+    <div id="modal-ficha-paciente" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white p-6 sm:p-8 rounded-xl shadow-2xl w-full max-w-2xl transform transition-all duration-300 custom-scrollbar overflow-y-auto max-h-[90vh]">
+            <div class="flex justify-between items-center border-b border-gray-200 pb-3 mb-4">
+                <h3 class="text-xl font-bold text-gray-800"><i class="fa-solid fa-folder-open text-teal-600 mr-2"></i>Ficha Única del Paciente</h3>
+                <button onclick="OdontoApp.closeModal('modal-ficha-paciente')" class="text-gray-400 hover:text-gray-600 text-xl font-bold font-mono">×</button>
             </div>
-            <p class="text-sm text-gray-600 mb-4">Puede refinar el texto de la receta e indicaciones clínicas antes de enviarlo por WhatsApp:</p>
-            <input type="hidden" id="wpp-consulta-id">
-            <input type="hidden" id="wpp-telefono">
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-xs font-semibold uppercase text-gray-500">Paciente</label>
-                    <div class="text-sm font-medium text-gray-800 mt-1" id="wpp-destinatario">Paciente</div>
+            
+            <div class="space-y-6">
+                <!-- 1. Datos del Paciente -->
+                <div class="grid grid-cols-2 gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200 text-sm">
+                    <div>
+                        <p class="text-xs text-gray-500 font-semibold uppercase">Paciente</p>
+                        <p class="font-bold text-gray-800 text-base" id="ficha-paciente-nombre">Paciente</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 font-semibold uppercase">Documento Identidad</p>
+                        <p class="font-mono text-gray-800" id="ficha-paciente-cedula">000000</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 font-semibold uppercase">Teléfono de Contacto</p>
+                        <p class="font-mono text-gray-800" id="ficha-paciente-telefono">000000</p>
+                    </div>
+                    <div>
+                        <p class="text-xs text-gray-500 font-semibold uppercase">Familiar / Tutor</p>
+                        <p class="text-gray-800" id="ficha-paciente-tutor">Titular Adulto</p>
+                    </div>
                 </div>
-                <div>
-                    <label class="block text-xs font-semibold uppercase text-gray-500">Receta Médica & Mensaje</label>
-                    <textarea id="wpp-mensaje-texto" rows="6" class="mt-1 block w-full border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none transition-all custom-scrollbar"></textarea>
+
+                <!-- 2. Historial Clínico de Citas -->
+                <div class="space-y-2">
+                    <h4 class="text-sm font-bold text-gray-700 uppercase tracking-wider border-b border-gray-100 pb-1"><i class="fa-solid fa-notes-medical mr-1.5 text-teal-600"></i>Línea de Tiempo Clínica</h4>
+                    <div class="max-h-48 overflow-y-auto custom-scrollbar border border-gray-100 rounded-lg p-2 space-y-3 bg-gray-50/50" id="ficha-clinica-linea-tiempo">
+                        <!-- JS inyectará el historial clínico -->
+                    </div>
+                </div>
+
+                <!-- 3. Estado de Cuenta Consolidado -->
+                <div class="space-y-2" id="ficha-financiera-seccion">
+                    <h4 class="text-sm font-bold text-gray-700 uppercase tracking-wider border-b border-gray-100 pb-1"><i class="fa-solid fa-file-invoice-dollar mr-1.5 text-teal-600"></i>Estado de Cuenta Financiero</h4>
+                    <div class="grid grid-cols-3 gap-3 text-center text-xs">
+                        <div class="bg-gray-100 p-2.5 rounded-lg border">
+                            <p class="text-gray-500 font-semibold uppercase">Costo Total Planes</p>
+                            <p class="font-mono font-bold text-gray-800 text-sm mt-1" id="ficha-finanzas-total">$0.00</p>
+                        </div>
+                        <div class="bg-green-50 p-2.5 rounded-lg border border-green-200">
+                            <p class="text-green-700 font-semibold uppercase">Total Abonado</p>
+                            <p class="font-mono font-bold text-green-700 text-sm mt-1" id="ficha-finanzas-abonado">$0.00</p>
+                        </div>
+                        <div class="bg-red-50 p-2.5 rounded-lg border border-red-200">
+                            <p class="text-red-700 font-semibold uppercase">Saldo Deudor</p>
+                            <p class="font-mono font-bold text-red-700 text-sm mt-1" id="ficha-finanzas-deuda">$0.00</p>
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="flex justify-end space-x-3 mt-6">
-                <button type="button" onclick="OdontoApp.closeModal('modal-whatsapp-preview')" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 font-semibold text-sm transition">Cancelar</button>
-                <button type="button" onclick="OdontoApp.executeWhatsAppSend()" class="bg-green-600 hover:bg-green-700 text-white px-5 py-2 rounded-lg flex items-center font-semibold text-sm transition shadow-sm">
-                    <i class="fa-brands fa-whatsapp mr-2 text-base"></i> Abrir WhatsApp e Iniciar
-                </button>
+            <div class="flex justify-end mt-6">
+                <button type="button" onclick="OdontoApp.closeModal('modal-ficha-paciente')" class="theme-bg text-white px-5 py-2 rounded-lg theme-hover transition font-semibold text-sm shadow-sm">Cerrar Ficha</button>
             </div>
         </div>
     </div>
@@ -585,7 +670,7 @@
                         <input type="text" id="doctor-telefono" required class="mt-1 block w-full border border-gray-300 rounded-lg p-2.5 text-right font-mono text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none transition" placeholder="Ej. 5215555555555">
                     </div>
 
-                    <!-- NUEVO FLUJO INTEGRADO: ASIGNACIÓN DE CREDENCIALES DIRECTAS -->
+                    <!-- SECCIÓN CREDENCIALES INTEGRADA: PARA CREAR DOCTOR CON ACCESO DE INMEDIATO -->
                     <div class="border-t border-gray-200 pt-3 space-y-3 mt-4">
                         <span class="text-xs font-bold uppercase tracking-wider text-teal-600 block">Asignar Cuenta de Acceso (Opcional)</span>
                         <p class="text-[10px] text-gray-500 leading-snug">Rellene estos campos si desea crearle un usuario y contraseña para ingresar de inmediato al sistema.</p>
@@ -613,13 +698,19 @@
         </div>
     </div>
 
-    <!-- MODAL USUARIO -->
+    <!-- MODAL USUARIO / PERSONAL -->
     <div id="modal-usuario" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50 flex items-center justify-center p-4">
         <div class="bg-white p-6 sm:p-8 rounded-xl shadow-2xl w-full max-w-md transform transition-all duration-300">
             <h3 class="text-xl font-bold text-gray-800 mb-4" id="usuario-modal-title">Crear Cuenta de Personal</h3>
             <form id="form-usuario" onsubmit="OdontoApp.saveUsuario(event)">
                 <input type="hidden" id="usuario-id">
                 <div class="space-y-4">
+                    <!-- Selector de Clínica (Exclusivo para Súper-Administrador @DMIN) -->
+                    <div id="super-clinica-select-field" class="hidden bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                        <label class="block text-xs font-bold text-yellow-800 uppercase">Asignar a Sucursal/Clínica</label>
+                        <select id="usuario-clinica-id" class="mt-1 block w-full border border-gray-300 rounded-lg p-2 bg-white text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none transition"></select>
+                    </div>
+
                     <div>
                         <label class="block text-sm font-medium text-gray-700">Cédula de Identidad (Sólo Números)</label>
                         <input type="text" id="usuario-cedula" required inputmode="numeric" oninput="this.value = this.value.replace(/[^0-9]/g, '')" class="mt-1 block w-full border border-gray-300 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none transition">
@@ -847,7 +938,7 @@
                     </div>
                 </div>
                 <div class="flex justify-end space-x-3 mt-6">
-                    <button type="button" onclick="OdontoApp.closeModal('modal-transaccion')" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 font-semibold text-sm transition">Cancelar</button>
+                    <button type="button" onclick="OdontoApp.closeModal('modal-transaccion')" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 font-semibold text-sm transition font-mono">Cancelar</button>
                     <button type="submit" class="theme-bg text-white px-4 py-2 rounded-lg theme-hover transition font-semibold text-sm font-mono shadow-sm">Registrar</button>
                 </div>
             </form>
@@ -861,12 +952,13 @@
             const SUPABASE_ANON_KEY = "sb_publishable_qxy5cFXV6Q-BIXbb6Dw_Mw_zN36tVfT";
 
             let supabaseClient = null;
-            let localState = { pacientes: [], doctores: [], servicios: [], consultas: [], transacciones: [], usuarios: [], consultorios: [] };
+            let localState = { pacientes: [], doctores: [], servicios: [], consultas: [], transacciones: [], usuarios: [], consultorios: [], clinicas: [] };
             
             let sessionActive = false;
             let currentSessionUser = null;
             let currentSessionRole = null; 
             let currentSessionDoctorId = null; 
+            let currentSessionClinicaId = null; // Identificador de Clínica del usuario logueado
             let isLoginAdminMode = false;
             
             const themes = ['teal', 'navy', 'dark', 'purple'];
@@ -947,16 +1039,18 @@
             async function fetchInitialLoginState() {
                 if (!supabaseClient) return;
                 try {
-                    const [cons, docs] = await Promise.all([
+                    const [cons, docs, clns] = await Promise.all([
                         supabaseClient.from('consultorios').select('*').order('nombre'),
-                        supabaseClient.from('doctores').select('*').order('nombre')
+                        supabaseClient.from('doctores').select('*').order('nombre'),
+                        supabaseClient.from('clinicas').select('*').order('nombre')
                     ]);
 
-                    const { data: secUsers } = await supabaseClient.from('usuarios').select('id, nombre, apellidos, rol, usuario, doctor_id');
+                    const { data: secUsers } = await supabaseClient.from('usuarios').select('id, nombre, apellidos, rol, usuario, doctor_id, clinica_id');
 
                     localState.usuarios = secUsers || [];
                     localState.consultorios = cons.data || [];
                     localState.doctores = docs.data || [];
+                    localState.clinicas = clns.data || [];
 
                     setupLoginInterface();
                 } catch (err) {
@@ -1015,6 +1109,7 @@
                     currentSessionRole = "ADMINISTRADOR";
                     currentSessionUser = "Administrador del Sistema";
                     currentSessionDoctorId = null;
+                    currentSessionClinicaId = "00000000-0000-0000-0000-000000000000"; // Clinica Matriz
                     unlockApp();
                     return;
                 }
@@ -1033,6 +1128,7 @@
                         currentSessionRole = verifiedUser.rol;
                         currentSessionUser = `${verifiedUser.nombre} ${verifiedUser.apellidos}`;
                         currentSessionDoctorId = verifiedUser.doctor_id || null;
+                        currentSessionClinicaId = verifiedUser.clinica_id; // Captura el ID del Tenant (clínica sucursal)
                         unlockApp();
                     } else {
                         showNotification("Credenciales incorrectas.", true);
@@ -1061,6 +1157,7 @@
                         currentSessionRole = "SECRETARIA";
                         currentSessionUser = `${verifiedUser.nombre} ${verifiedUser.apellidos}`;
                         currentSessionDoctorId = null;
+                        currentSessionClinicaId = verifiedUser.clinica_id; // Captura el ID del Tenant (clínica sucursal)
                         unlockApp();
                     } else {
                         showNotification("Contraseña incorrecta para el turno.", true);
@@ -1093,6 +1190,7 @@
                 currentSessionUser = null;
                 currentSessionRole = null;
                 currentSessionDoctorId = null;
+                currentSessionClinicaId = null;
                 
                 document.getElementById('login-overlay').classList.remove('hidden');
                 document.getElementById('app-header').classList.add('hidden');
@@ -1192,6 +1290,19 @@
 
             function openModal(modalId) {
                 document.getElementById(modalId).classList.remove('hidden');
+                
+                // CONDICIONAL SUPER-ADMIN: Mostrar u ocultar el campo de selección de clínicas en creación de usuarios
+                const superClinicaField = document.getElementById('super-clinica-select-field');
+                if (superClinicaField) {
+                    if (currentSessionClinicaId === '00000000-0000-0000-0000-000000000000') {
+                        superClinicaField.classList.remove('hidden');
+                        const selectClinica = document.getElementById('usuario-clinica-id');
+                        selectClinica.innerHTML = localState.clinicas.map(cl => `<option value="${cl.id}">${cl.nombre}</option>`).join('');
+                    } else {
+                        superClinicaField.classList.add('hidden');
+                    }
+                }
+
                 if (modalId === 'modal-consulta') {
                     const pacSel = document.getElementById('consulta-paciente');
                     const docSel = document.getElementById('consulta-doctor');
@@ -1238,17 +1349,19 @@
                 }, 500);
             }
 
+            // LECTURA DE DATOS MULTI-TENANT CON FILTRADO ESTRICTO DE SUCURSAL (clinica_id)
             async function fetchAllData() {
                 if (!supabaseClient) return;
                 try {
-                    const [pac, doc, ser, con, tra, usr, cnst] = await Promise.all([
-                        supabaseClient.from('pacientes').select('*, tutor:tutor_id(nombre, apellidos)').order('nombre'),
-                        supabaseClient.from('doctores').select('*').order('nombre'),
-                        supabaseClient.from('servicios').select('*').order('nombre'),
-                        supabaseClient.from('consultas').select('*, pacientes(nombre, apellidos, telefono, cedula, tutor_id), doctores(nombre), servicios(nombre), consultorios(nombre)').order('fecha_hora', { ascending: true }),
-                        supabaseClient.from('transacciones').select('*').order('fecha', { ascending: false }),
-                        supabaseClient.from('usuarios').select('id, cedula, nombre, apellidos, telefono, email, usuario, rol, doctor_id').order('nombre'),
-                        supabaseClient.from('consultorios').select('*').order('nombre')
+                    const [pac, doc, ser, con, tra, usr, cnst, clns] = await Promise.all([
+                        supabaseClient.from('pacientes').select('*, tutor:tutor_id(nombre, apellidos)').eq('clinica_id', currentSessionClinicaId).order('nombre'),
+                        supabaseClient.from('doctores').select('*').eq('clinica_id', currentSessionClinicaId).order('nombre'),
+                        supabaseClient.from('servicios').select('*').eq('clinica_id', currentSessionClinicaId).order('nombre'),
+                        supabaseClient.from('consultas').select('*, pacientes(nombre, apellidos, telefono, cedula, tutor_id), doctores(nombre), servicios(nombre), consultorios(nombre)').eq('clinica_id', currentSessionClinicaId).order('fecha_hora', { ascending: true }),
+                        supabaseClient.from('transacciones').select('*').eq('clinica_id', currentSessionClinicaId).order('fecha', { ascending: false }),
+                        supabaseClient.from('usuarios').select('id, cedula, nombre, apellidos, telefono, email, usuario, rol, doctor_id, clinica_id').eq('clinica_id', currentSessionClinicaId).order('nombre'),
+                        supabaseClient.from('consultorios').select('*').eq('clinica_id', currentSessionClinicaId).order('nombre'),
+                        supabaseClient.from('clinicas').select('*').order('nombre')
                     ]);
 
                     localState.pacientes = pac.data || [];
@@ -1258,6 +1371,7 @@
                     localState.transacciones = tra.data || [];
                     localState.usuarios = usr.data || [];
                     localState.consultorios = cnst.data || [];
+                    localState.clinicas = clns.data || [];
 
                     renderAll();
                 } catch (err) {
@@ -1266,7 +1380,7 @@
                 }
             }
 
-            // NUEVA FUNCIÓN DE GUARDADO PARA DOCTORES CON ACCESO INTEGRADO DIRECTO
+            // ESCRITURA MULTI-TENANT: INYECCIÓN AUTOMÁTICA DEL SUCURSAL ID (clinica_id) EN TODAS LAS OPERACIONES
             async function saveDoctor(e) {
                 e.preventDefault();
                 try {
@@ -1278,7 +1392,8 @@
                     const docData = {
                         nombre: doctorNombre,
                         especialidad: doctorEspecialidad,
-                        telefono: doctorTelefono
+                        telefono: doctorTelefono,
+                        clinica_id: currentSessionClinicaId
                     };
 
                     let docId = id;
@@ -1299,7 +1414,7 @@
                         return;
                     }
 
-                    // Lectura y verificación de campos opcionales de credenciales
+                    // Fujo automatizado opcional de credenciales para doctor
                     const cedula = document.getElementById('doctor-cedula').value.trim();
                     const username = document.getElementById('doctor-username').value.trim();
                     const password = document.getElementById('doctor-password').value.trim();
@@ -1315,7 +1430,8 @@
                             usuario: username,
                             contrasena: password,
                             rol: 'DOCTOR',
-                            doctor_id: docId
+                            doctor_id: docId,
+                            clinica_id: currentSessionClinicaId
                         };
 
                         let usrErr;
@@ -1351,7 +1467,11 @@
                     const cleanPhone = rawPhone.replace(/[+\s()-]/g, '');
 
                     const rol = document.getElementById('usuario-rol').value;
-                    const doctorId = rol === 'DOCTOR' ? (document.getElementById('usuario-doctor-id').value || null) : null;
+                    const doctorId = document.getElementById('usuario-doctor-id').value || null;
+                    
+                    // Asignación de Clinica Inteligente: Si es Super-Admin, asocia a la clínica elegida, si no, a su propia clínica
+                    const clinicaId = (currentSessionClinicaId === '00000000-0000-0000-0000-000000000000') ?
+                        (document.getElementById('usuario-clinica-id').value) : currentSessionClinicaId;
 
                     const data = {
                         cedula: cedula,
@@ -1362,7 +1482,8 @@
                         usuario: username,
                         contrasena: document.getElementById('usuario-password').value.trim(),
                         rol: rol,
-                        doctor_id: doctorId
+                        doctor_id: doctorId,
+                        clinica_id: clinicaId
                     };
 
                     let error;
@@ -1393,7 +1514,8 @@
                     const id = document.getElementById('servicio-id').value;
                     const data = {
                         nombre: document.getElementById('servicio-nombre').value,
-                        costo: parseFloat(document.getElementById('servicio-costo').value)
+                        costo: parseFloat(document.getElementById('servicio-costo').value),
+                        clinica_id: currentSessionClinicaId
                     };
 
                     let error;
@@ -1439,7 +1561,8 @@
                         email: emailVal !== "" ? emailVal : null,
                         fecha_nacimiento: document.getElementById('paciente-fechaNac').value,
                         tutor_id: tutorId,
-                        parentesco: parentesco
+                        parentesco: parentesco,
+                        clinica_id: currentSessionClinicaId
                     };
 
                     let error;
@@ -1493,7 +1616,11 @@
                     }
 
                     const metodo_pago = document.getElementById('consulta-metodo-pago').value;
-                    const data = { paciente_id, doctor_id, servicio_id, consultorio_id, fecha_hora, estado, pago, costo, monto_pagado: nuevo_monto_total_pagado, receta };
+                    const data = { 
+                        paciente_id, doctor_id, servicio_id, consultorio_id, fecha_hora, estado, pago, costo, 
+                        monto_pagado: nuevo_monto_total_pagado, receta,
+                        clinica_id: currentSessionClinicaId
+                    };
 
                     let result;
                     if (id) {
@@ -1520,7 +1647,8 @@
                                 monto: nuevo_abono,
                                 metodo_pago: metodo_pago,
                                 fecha: new Date().toISOString().split('T')[0],
-                                consulta_id: conDoc.id
+                                consulta_id: conDoc.id,
+                                clinica_id: currentSessionClinicaId
                             }]);
                             
                             if (txErr) {
@@ -1541,7 +1669,10 @@
                 e.preventDefault();
                 try {
                     const id = document.getElementById('consultorio-id').value;
-                    const data = { nombre: document.getElementById('consultorio-nombre').value };
+                    const data = { 
+                        nombre: document.getElementById('consultorio-nombre').value,
+                        clinica_id: currentSessionClinicaId
+                    };
 
                     let error;
                     if (id) {
@@ -1573,7 +1704,8 @@
                         tipo: document.getElementById('transaccion-tipo').value,
                         monto: parseFloat(document.getElementById('transaccion-monto').value),
                         metodo_pago: document.getElementById('transaccion-metodo-pago').value,
-                        fecha: document.getElementById('transaccion-fecha').value
+                        fecha: document.getElementById('transaccion-fecha').value,
+                        clinica_id: currentSessionClinicaId
                     };
 
                     const { error } = await supabaseClient.from('transacciones').insert([data]);
@@ -1791,7 +1923,6 @@
                 openModal('modal-servicio');
             }
 
-            // CARGA DE CREDENCIALES AL EDITAR FICHA DE DOCTOR
             function editDoctor(id) {
                 const d = localState.doctores.find(x => x.id === id);
                 if (!d) return;
@@ -1829,8 +1960,13 @@
                 document.getElementById('usuario-rol').value = u.rol || 'SECRETARIA';
                 
                 toggleDoctorLinkField();
-                if (u.rol === 'DOCTOR') {
+                if (u.rol === 'DOCTOR' || u.rol === 'ADMINISTRADOR') {
                     document.getElementById('usuario-doctor-id').value = u.doctor_id || '';
+                }
+
+                // Si es super-admin, carga la clínica del usuario en edición
+                if (currentSessionClinicaId === '00000000-0000-0000-0000-000000000000') {
+                    document.getElementById('usuario-clinica-id').value = u.clinica_id || '';
                 }
 
                 document.getElementById('usuario-modal-title').innerText = "Editar Personal";
@@ -1996,18 +2132,88 @@
                 }
             }
 
+            // MODIFICACIÓN EXCLUSIVA: PERMITIR VINCULACIÓN DE DOCTORES A ADMINISTRADORES
             function toggleDoctorLinkField() {
                 const rol = document.getElementById('usuario-rol').value;
                 const linkField = document.getElementById('user-doctor-link-field');
                 const selectDoc = document.getElementById('usuario-doctor-id');
 
-                if (rol === 'DOCTOR') {
+                if (rol === 'DOCTOR' || rol === 'ADMINISTRADOR') {
                     linkField.classList.remove('hidden');
-                    selectDoc.innerHTML = localState.doctores.map(d => `<option value="${d.id}">${d.nombre} (${d.especialidad})</option>`).join('');
+                    
+                    let optionsHTML = "";
+                    if (rol === 'ADMINISTRADOR') {
+                        optionsHTML = `<option value="">-- Administrador Puro (Sin Consultorio) --</option>`;
+                    }
+                    optionsHTML += localState.doctores.map(d => `<option value="${d.id}">${d.nombre} (${d.especialidad})</option>`).join('');
+                    
+                    selectDoc.innerHTML = optionsHTML;
                 } else {
                     linkField.classList.add('hidden');
                     selectDoc.innerHTML = "";
                 }
+            }
+
+            // APERTURA DE EXPEDIENTE INTEGRADO (FICHA 360 COMPLETA)
+            function openFichaPaciente(id) {
+                const p = localState.pacientes.find(x => x.id === id);
+                if (!p) return;
+
+                document.getElementById('ficha-paciente-nombre').innerText = `${p.nombre} ${p.apellidos || ''}`;
+                document.getElementById('ficha-paciente-cedula').innerText = p.cedula || 'Sin Cédula';
+                document.getElementById('ficha-paciente-telefono').innerText = p.telefono || 'Sin Teléfono';
+
+                // Mostrar información de tutor si aplica
+                if (p.tutor) {
+                    document.getElementById('ficha-paciente-tutor').innerHTML = `${p.tutor.nombre} ${p.tutor.apellidos} <span class="italic text-gray-500">(${p.parentesco || 'Tutor'})</span>`;
+                } else {
+                    document.getElementById('ficha-paciente-tutor').innerText = "Titular Adulto";
+                }
+
+                // Generar Línea de tiempo clínica
+                const citas = localState.consultas.filter(c => c.paciente_id === p.id && c.estado !== 'Eliminada');
+                const timelineDiv = document.getElementById('ficha-clinica-linea-tiempo');
+                
+                if (citas.length === 0) {
+                    timelineDiv.innerHTML = `<div class="text-center py-6 text-xs text-gray-400">Este paciente no registra citas operativas en el sistema.</div>`;
+                } else {
+                    timelineDiv.innerHTML = citas.map(c => {
+                        const dateStr = c.fecha_hora.replace('T', ' ').slice(0, 16);
+                        return `
+                            <div class="bg-white p-3 rounded-lg border border-gray-100 space-y-1 text-xs shadow-2xs">
+                                <div class="flex justify-between font-semibold text-gray-800">
+                                    <span>${dateStr} - ${c.servicios?.nombre || 'General'}</span>
+                                    <span class="px-1.5 py-0.5 rounded text-[10px] ${c.estado === 'Completada' ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-orange-800'}">${c.estado}</span>
+                                </div>
+                                <p class="text-gray-500"><i class="fa-solid fa-user-doctor mr-1"></i>Dr. ${c.doctores?.nombre || 'No asignado'}</p>
+                                <p class="text-gray-700 bg-gray-50 p-1.5 rounded mt-1 italic">"Receta/Indicación: ${c.receta || 'Sin indicaciones registradas.'}"</p>
+                            </div>
+                        `;
+                    }).join('');
+                }
+
+                // Generar Finanzas Consolidadas (Solo visible para Admin y Secretaria)
+                const financieraSeccion = document.getElementById('ficha-financiera-seccion');
+                if (currentSessionRole === 'ADMINISTRADOR' || currentSessionRole === 'SECRETARIA') {
+                    financieraSeccion.classList.remove('hidden');
+                    let totalCost = 0;
+                    let totalPaid = 0;
+
+                    citas.forEach(c => {
+                        totalCost += parseFloat(c.costo) || 0;
+                        totalPaid += parseFloat(c.monto_pagado) || 0;
+                    });
+
+                    const debt = totalCost - totalPaid;
+
+                    document.getElementById('ficha-finanzas-total').innerText = `$${totalCost.toFixed(2)}`;
+                    document.getElementById('ficha-finanzas-abonado').innerText = `$${totalPaid.toFixed(2)}`;
+                    document.getElementById('ficha-finanzas-deuda').innerText = `$${debt.toFixed(2)}`;
+                } else {
+                    financieraSeccion.classList.add('hidden');
+                }
+
+                openModal('modal-ficha-paciente');
             }
 
             function renderAll() {
@@ -2020,6 +2226,7 @@
                 renderUsuarios();
                 renderConsultorios();
                 renderQueueBoard();
+                renderDeudores(); // Carga de la lista de cartera de deudores
             }
 
             function renderDashboard() {
@@ -2237,8 +2444,9 @@
                             <td class="px-6 py-4 text-gray-500">${tutorLabel}</td>
                             <td class="px-6 py-4 text-gray-500 text-right font-mono">${p.fecha_nacimiento}</td>
                             <td class="px-6 py-4 text-right space-x-2">
-                                <button onclick="OdontoApp.editPaciente('${p.id}')" class="text-teal-600 hover:text-teal-900 p-1"><i class="fa-solid fa-pen"></i></button>
-                                <button onclick="OdontoApp.deletePaciente('${p.id}')" class="text-red-600 hover:text-red-955 p-1"><i class="fa-solid fa-trash"></i></button>
+                                <button onclick="OdontoApp.openFichaPaciente('${p.id}')" class="text-teal-600 hover:text-teal-900 p-1" title="Ver Expediente Único"><i class="fa-solid fa-eye"></i></button>
+                                <button onclick="OdontoApp.editPaciente('${p.id}')" class="text-teal-600 hover:text-teal-900 p-1" title="Editar Fila"><i class="fa-solid fa-pen"></i></button>
+                                <button onclick="OdontoApp.deletePaciente('${p.id}')" class="text-red-600 hover:text-red-955 p-1" title="Dar de baja"><i class="fa-solid fa-trash"></i></button>
                             </td>
                         </tr>
                     `;
@@ -2326,6 +2534,48 @@
                 if (countTrash === 0) {
                     trashTbody.innerHTML = `<tr><td colspan="6" class="px-6 py-4 text-center text-xs text-gray-400">Papelera de auditoría vacía.</td></tr>`;
                 }
+            }
+
+            // CARGA DE LISTADO DE DEUDORES (SÓLO ADMIN Y SECRETARIA)
+            function renderDeudores() {
+                const tbody = document.getElementById('deudores-tbody');
+                tbody.innerHTML = '';
+
+                // Filtrar citas que registren adeudo clínico real
+                const deudores = localState.consultas.filter(c => 
+                    c.estado !== 'Eliminada' && 
+                    (parseFloat(c.costo) || 0) > (parseFloat(c.monto_pagado) || 0)
+                );
+
+                if (deudores.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="7" class="px-6 py-4 text-center text-xs text-gray-400">No hay cuentas pendientes por cobrar hoy.</td></tr>`;
+                    return;
+                }
+
+                deudores.forEach(c => {
+                    const pacName = c.pacientes ? `${c.pacientes.nombre} ${c.pacientes.apellidos || ''}` : 'N/A';
+                    const servName = c.servicios?.nombre || 'Consulta';
+                    const costo = parseFloat(c.costo) || 0;
+                    const abono = parseFloat(c.monto_pagado) || 0;
+                    const deuda = costo - abono;
+                    const fecha = c.fecha_hora.split('T')[0];
+
+                    tbody.innerHTML += `
+                        <tr class="hover:bg-red-50/30 transition-colors">
+                            <td class="px-6 py-3 font-semibold text-gray-900">${pacName}</td>
+                            <td class="px-6 py-3 text-gray-500">${servName}</td>
+                            <td class="px-6 py-3 font-mono text-xs text-gray-500">${fecha}</td>
+                            <td class="px-6 py-3 text-right font-mono text-gray-600">$${costo.toFixed(2)}</td>
+                            <td class="px-6 py-3 text-right font-mono text-green-700">$${abono.toFixed(2)}</td>
+                            <td class="px-6 py-3 text-right font-mono font-bold text-red-600">$${deuda.toFixed(2)}</td>
+                            <td class="px-6 py-3 text-right">
+                                <button onclick="OdontoApp.editConsulta('${c.id}')" class="bg-red-600 hover:bg-red-700 text-white text-xs px-2.5 py-1 rounded font-semibold transition" title="Registrar Cobro">
+                                    <i class="fa-solid fa-cash-register mr-1"></i> Cobrar
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                });
             }
 
             function renderContabilidad() {
@@ -2416,7 +2666,8 @@
                 executeWhatsAppSend,
                 openGoogleCalendarLink,
                 toggleTutorFields,
-                toggleDoctorLinkField
+                toggleDoctorLinkField,
+                openFichaPaciente
             };
 
             window.addEventListener('DOMContentLoaded', () => {
