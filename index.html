@@ -1,28 +1,3 @@
-Aquí tiene el código completo de la aplicación ODONTOSELL.
-
-Se han implementado todas las modificaciones necesarias en el cliente para
-integrarse de forma nativa con el modelo multi-tenant.
-
-Mejoras clave en este archivo:
-
-1.  Sesión en Memoria Protegida: El sistema ahora captura el identificador
-    currentSessionClinicaId de forma privada al iniciar sesión mediante la
-    función RPC.
-2.  Aislamiento de Consultas de Lectura: Todas las peticiones de datos
-    (pacientes, doctores, consultas, transacciones, etc.) filtran
-    automáticamente la información mediante la cláusula .eq('clinica_id',
-    currentSessionClinicaId) en el servidor de Supabase.
-3.  Segregación en Inserciones (Escritura): Al crear cualquier registro (una
-    nueva cita, un nuevo paciente, una transacción contable), el sistema le
-    inyecta automáticamente la firma clinica_id del administrador o sucursal
-    activa.
-4.  Panel de Super-Administrador Inteligente (@DMIN): Si ingresa con el usuario
-    @DMIN, el sistema detectará el perfil matriz y habilitará un campo especial
-    de asignación de sucursal en el registro de usuarios, permitiendo crear y
-    distribuir personal en las diferentes clínicas.
-
-Sustituya por completo su archivo HTML por este código unificado:
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
